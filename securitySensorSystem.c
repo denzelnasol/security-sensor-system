@@ -1,7 +1,13 @@
 #include <stdio.h>
 
-int main(int arg, char** args)
+#include "MotionSensor/motionSensorController.h"
+
+int main(int argc, char **argv)
 {
-    printf("Hello World!\n");
+    printf("hello world\n");
+
+    MotionSensorController_start();
+    MotionSensorController_stop();
+
     return 0;
 }
