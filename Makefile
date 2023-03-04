@@ -1,8 +1,9 @@
 # AUDIO = Audio/BeatGenerator/beatGenerator.c Audio/AudioMixer/audioMixer.c
-# UTILITIES = Utilities/utilities.c Utilities/PeriodTimer/periodTimer.c Terminal/terminal.c Controller/controller.c Utilities/Timer/timer.c
+UTILITIES = Utilities/utilities.c
+WEBCAM = WebCam/Recorder/Recorder.c
 # NETWORKING = Server/Networking/network.c Server/Networking/responseHandler.c
 # ZENCAPE = ZenCape/Accelerometer/accelerometer.c ZenCape/Accelerometer/accController.c ZenCape/Joystick/joystick.c
-# SOURCE = $(UTILITIES) ${AUDIO} ${NETWORKING} ${ZENCAPE}
+SOURCE = $(UTILITIES) ${WEBCAM}
 
 OUTDIR = $(HOME)/cmpt433/public/myApps
 OUTFILE = securitySensorSystem
@@ -16,7 +17,7 @@ all:
 	make src
 
 src:
-	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lm -lpthread -lasound
+	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread
 
 clean:
 	rm -f *~ *.o $(OUTDIR)/$(OUTFILE)
