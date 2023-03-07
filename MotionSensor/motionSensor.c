@@ -6,16 +6,12 @@
 #include "../Utilities/utilities.h"
 
 
-#define EXPORT_PATH                         "/sys/class/gpio/export"
-
 #define GPIO_31                             31
 
 #define GPIO_31_BASE                        "/sys/class/gpio/gpio31"
 
 #define GPIO_31_DIRECTION                   GPIO_31_BASE "/direction"
 #define GPIO_31_VALUE                       GPIO_31_BASE "/value"
-
-#define GPIO_SETUP_DELAY_MS                 300
 
 // ------------------------- PRIVATE ------------------------- //
 
@@ -29,10 +25,7 @@ static void setAsInput()
 
 static void exportPin()
 {
-    if (!Utililties_isFileExists(GPIO_31_BASE)) {
-        Utilities_writeIntValueToFile(GPIO_31, EXPORT_PATH);
-        Utilities_sleepForMs(GPIO_SETUP_DELAY_MS);
-    }
+    Utilities_exportGpioPin(GPIO_31_BASE, GPIO_31);
 }
 
 static void configPin() 

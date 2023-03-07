@@ -14,6 +14,8 @@
 #define UTILITIES_BUFFER_SIZE 1024
 
 void Utilities_sleepForMs(long double delayInMs);
+
+void Utilities_exportGpioPin(const char *pFilePath, int gpioNumber);
 int Utilities_readGpioValue(const char *pFilePath);
 
 void Utilities_writeIntValueToFile(int value, const char* path);
