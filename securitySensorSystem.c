@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     PInputSequence seq = PasswordInput_getInputSequence();
     printf("got\n");
     for (int i = 0; i < seq.size; i++) {
-        printf("%d: %d", i, seq.input[i]);
+        printf("%d: %d\n", i, seq.input[i]);
     }
 
     Joystick_cleanup();

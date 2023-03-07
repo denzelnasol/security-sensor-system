@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "../Joystick/joystick.h"
+
 typedef struct {
     const JoystickInput *input;
     size_t size;
