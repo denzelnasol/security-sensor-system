@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
+    "mime": "^3.0.0",
+    "path": "^0.12.7",
+    "socket.io": "^4.6.1"
+  }
+}
