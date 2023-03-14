@@ -1,10 +1,11 @@
 WEBCAM = WebCam/Recorder/Recorder.c
 MOTION = MotionSensor/motionSensor.c MotionSensor/motionSensorController.c
 UTILITIES = Utilities/utilities.c Timer/timer.c
-SOURCE = $(UTILITIES) ${WEBCAM} ${MOTION}
+PASSWORD = PasswordInput/passwordInput.c
+JOYSTICK = Joystick/joystick.c
+SOURCE = $(UTILITIES) ${MOTION} ${JOYSTICK} ${PASSWORD} ${WEBCAM}
 
-# OUTDIR = $(HOME)/cmpt433/public/myApps
-OUTDIR = ../build
+OUTDIR = $(HOME)/cmpt433/public/myApps
 OUTFILE = securitySensorSystem
 
 CROSS_COMPILE = arm-linux-gnueabihf-
@@ -17,7 +18,7 @@ all:
 
 
 wsl:
-	gcc $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
+	gcc $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  ../build/$(OUTFILE) -lpthread
 
 src:
 	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread

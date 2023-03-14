@@ -1,7 +1,10 @@
 #include "utilities.h"
 
-#define READ "r"
-#define WRITE "w"
+#define READ                                "r"
+#define WRITE                               "w"
+
+#define EXPORT_PATH                         "/sys/class/gpio/export"
+#define GPIO_SETUP_DELAY_MS                 300
 
 const int SECONDS_TO_MILLISECONDS = 1000;
 const int NANO_SECONDS_TO_MILLISECONDS = 1000000;
@@ -50,6 +53,14 @@ int Utilities_readNumberFromFile(const char* filePath) {
 
     fclose(file);
     return a2dReading;
+}
+
+void Utilities_exportGpioPin(const char *pFilePath, int gpioNumber)
+{
+    if (!Utililties_isFileExists(pFilePath)) {
+        Utilities_writeIntValueToFile(gpioNumber, EXPORT_PATH);
+        Utilities_sleepForMs(GPIO_SETUP_DELAY_MS);
+    }
 }
 
 int Utilities_readGpioValue(const char *pFilePath)
