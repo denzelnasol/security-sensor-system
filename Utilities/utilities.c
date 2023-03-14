@@ -52,6 +52,24 @@ int Utilities_readNumberFromFile(const char* filePath) {
     return a2dReading;
 }
 
+int Utilities_readGpioValue(const char *pFilePath)
+{
+    FILE *f = fopen(pFilePath, "r");
+    if (f == NULL) {
+        fprintf(stderr, "Error opening '%s'.\n", pFilePath);
+        exit(1);
+    }
+
+    int number = 0;
+    if (fscanf(f, "%d", &number) == EOF) { 
+        fprintf(stderr, "ERROR READING DATA");
+        exit(1);
+    }
+
+    fclose(f);
+    return number;
+}
+
 void Utilities_writeIntValueToFile(int value, const char* path) {
     FILE *pFile = fopen(path, WRITE);
     if (pFile == NULL) {
@@ -89,7 +107,7 @@ void Utilities_writeStringValueToFile(const char* value, const char* path) {
         exit(1);
     }
 
-    int charWritten = fprintf(pFile, value);
+    int charWritten = fputs(value, pFile);
     if (charWritten <= 0) {
         printf("ERROR WRITING DATA");
         exit(1);

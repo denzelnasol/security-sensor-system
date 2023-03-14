@@ -14,7 +14,8 @@
 #define UTILITIES_BUFFER_SIZE 1024
 
 void Utilities_sleepForMs(long double delayInMs);
-int Utilities_readNumberFromFile();
+int Utilities_readNumberFromFile(const char* filePath);
+int Utilities_readGpioValue(const char *pFilePath);
 
 void Utilities_writeIntValueToFile(int value, const char* path);
 void Utilities_writeStringValueToFile(const char* value, const char* path);
