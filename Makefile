@@ -14,7 +14,9 @@ CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
 
 all:
 	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
-
+	sudo mkdir -p $(PUBDIR)/Server-copy/
+	sudo cp -R Server/* $(PUBDIR)/Server-copy/
+	cd $(PUBDIR)/Server-copy/ && sudo npm install
 
 wsl:
 	gcc $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  ../build/$(OUTFILE) -lpthread
