@@ -1,9 +1,11 @@
 {
-  "dependencies": {
-    "fs": "^0.0.1-security",
-    "http": "^0.0.1-security",
-    "mime": "^3.0.0",
-    "path": "^0.12.7",
-    "socket.io": "^4.6.1"
-  }
+	"dependencies": {
+		"jquery": "latest",
+		"mime": "latest",
+		"ws": "latest"
+	},
+	"description": "Webcam video streaming",
+	"name": "webcam-stream",
+	"type": "module",
+	"version": "0.0.1"
 }
