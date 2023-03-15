@@ -1,0 +1,93 @@
+#peer-view, #self-view {
+	background-color: rgb(243, 233, 221);
+	border-radius: 2px;
+	border: 2px solid #767676;
+	width: 45%;
+}
+
+.center {
+	margin: 0 auto;
+	width: fit-content;
+}
+
+.contents {
+	align-items: stretch;
+	display: flex;
+	height: 80%;
+	justify-content: space-evenly;
+	width: 100%;
+}
+
+.title {
+	margin-bottom: 20px;
+	margin-top: 30px;
+	margin: 0 auto;
+	width: fit-content;
+}
+
+body {
+	margin: 0 auto;
+}	
+
+body, html {
+	background-color: rgb(252, 252, 252);
+	height: 100%;
+	width: 100%;
+}
+
+h1 {
+	margin: auto;
+}
+
+/* login page */
+
+/* Full-width inputs */
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+/* Set a style for all buttons */
+button {
+    background-color: #04aa6d;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Add a hover effect for buttons */
+button:hover {
+    opacity: 0.8;
+}
+
+/* Add padding to containers */
+.container {
+    padding: 16px;
+    width: 600px;
+    margin: 150px auto;
+}
+
+/* The "Forgot password" text */
+span.psw {
+    float: right;
+    padding-top: 16px;
+}
+
+/* Change styles for span and cancel button on extra small screens */
+@media screen and (max-width: 300px) {
+    span.psw {
+        display: block;
+        float: none;
+    }
+    .cancelbtn {
+        width: 100%;
+    }
+}

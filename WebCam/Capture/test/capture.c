@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  V4L2 video capture example, modified by Derek Molloy for the Logitech C920 camera
  *  Modifications, added the -F mode for H264 capture and associated help detail
  *  www.derekmolloy.ie
@@ -16,6 +16,13 @@
 #include <string.h>
 #include <assert.h>
 
+// UDP Libraries
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdbool.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
 #include <getopt.h>             /* getopt_long() */
 
 #include <fcntl.h>              /* low-level i/o */
@@ -30,6 +37,34 @@
 #include <linux/videodev2.h>
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
+
+#define PORT_T 3000
+#define RPORT_T 1234 //Port for NodeJS
+
+static struct sockaddr_in sinT;
+static struct sockaddr_in sinRemoteT;
+static int socketDescriptorT;
+
+void openConnectionT() {
+    memset(&sinT, 0, sizeof(sinT));
+    sinT.sin_family = AF_INET;
+    sinT.sin_addr.s_addr = htonl(INADDR_ANY);
+    sinT.sin_port = htons(PORT_T);
+    socketDescriptorT = socket(PF_INET, SOCK_DGRAM, 0);
+    bind(socketDescriptorT, (struct sockaddr *)&sinT, sizeof(sinT));
+    sinRemoteT.sin_family = AF_INET;
+    sinRemoteT.sin_port = htons(RPORT_T);
+    sinRemoteT.sin_addr.s_addr = inet_addr("192.168.7.1");
+}
+
+int sendResponseT(const void *str, int size) {
+    int packetSent = 0;
+    sendto(socketDescriptorT, str, size, 0, (struct sockaddr *)&sinRemoteT,
+           sizeof(sinRemoteT));
+    return packetSent;
+}
+
+void closeConnectionT() { close(socketDescriptorT); }
 
 enum io_method {
         IO_METHOD_READ,
@@ -49,7 +84,7 @@ struct buffer          *buffers;
 static unsigned int     n_buffers;
 static int              out_buf;
 static int              force_format = 0;
-static int              frame_count = 100;
+static int              frame_count = 300;
 
 static void errno_exit(const char *s)
 {
@@ -68,14 +103,11 @@ static int xioctl(int fh, int request, void *arg)
         return r;
 }
 
-static void process_image(const void *p, int size)
-{
-        if (out_buf)
-                fwrite(p, size, 1, stdout);
-
+static void process_image(const void *p, int size) {
+        if (out_buf) {
+                sendResponseT(p, size);
+        }
         fflush(stderr);
-        fprintf(stderr, ".");
-        fflush(stdout);
 }
 
 static int read_frame(void)
@@ -188,7 +220,7 @@ static void mainloop(void)
                         FD_SET(fd, &fds);
 
                         /* Timeout. */
-                        tv.tv_sec = 30;
+                        tv.tv_sec = 5;
                         tv.tv_usec = 0;
 
                         r = select(fd + 1, &fds, NULL, NULL, &tv);
@@ -490,22 +522,19 @@ static void init_device(void)
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fprintf(stderr, "Force Format %d\n", force_format);
         if (force_format) {
-		if (force_format==2){
-             		fmt.fmt.pix.width       = 1280;     
-           		fmt.fmt.pix.height      = 720;  
-  			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
-                	fmt.fmt.pix.field       = V4L2_FIELD_NONE;
-		}
-		else if(force_format==1){
-			fmt.fmt.pix.width	= 1280;
-			fmt.fmt.pix.height	= 720;
-			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
-			fmt.fmt.pix.field	= V4L2_FIELD_NONE;
-		}
-
+                if (force_format == 2) {
+                        fmt.fmt.pix.width = 640;
+                        fmt.fmt.pix.height = 480;
+                        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
+                        fmt.fmt.pix.field = V4L2_FIELD_NONE;
+                } else if (force_format == 1) {
+                        fmt.fmt.pix.width = 640;
+                        fmt.fmt.pix.height = 480;
+                        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
+                        fmt.fmt.pix.field = V4L2_FIELD_NONE;
+                }
                 if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
                         errno_exit("VIDIOC_S_FMT");
-
                 /* Note VIDIOC_S_FMT may change width and height. */
         } else {
                 /* Preserve original settings as set by v4l2-ctl for example */
@@ -568,106 +597,16 @@ static void open_device(void)
         }
 }
 
-static void usage(FILE *fp, int argc, char **argv)
-{
-        fprintf(fp,
-                 "Usage: %s [options]\n\n"
-                 "Version 1.3\n"
-                 "Options:\n"
-                 "-d | --device name   Video device name [%s]\n"
-                 "-h | --help          Print this message\n"
-                 "-m | --mmap          Use memory mapped buffers [default]\n"
-                 "-r | --read          Use read() calls\n"
-                 "-u | --userp         Use application allocated buffers\n"
-                 "-o | --output        Outputs stream to stdout\n"
-                 "-f | --format        Force format to 640x480 YUYV\n"
-		 "-F | --formatH264    Force format to 1920x1080 H264\n"
-                 "-c | --count         Number of frames to grab [%i] - use 0 for infinite\n"
-                 "\n"
-		 "Example usage: capture -F -o -c 300 > output.raw\n"
-		 "Captures 300 frames of H264 at 1920x1080 - use raw2mpg4 script to convert to mpg4\n",
-                 argv[0], dev_name, frame_count);
-}
-
-static const char short_options[] = "d:hmruofFc:";
-
-static const struct option
-long_options[] = {
-        { "device", required_argument, NULL, 'd' },
-        { "help",   no_argument,       NULL, 'h' },
-        { "mmap",   no_argument,       NULL, 'm' },
-        { "read",   no_argument,       NULL, 'r' },
-        { "userp",  no_argument,       NULL, 'u' },
-        { "output", no_argument,       NULL, 'o' },
-        { "format", no_argument,       NULL, 'f' },
-	{ "formatH264", no_argument,   NULL, 'F' },
-        { "count",  required_argument, NULL, 'c' },
-        { 0, 0, 0, 0 }
-};
-
-int main(int argc, char **argv)
-{
+int main() {
+        printf("Starting streaming\n");
+        openConnectionT();
         dev_name = "/dev/video0";
-
-        for (;;) {
-                int idx;
-                int c;
-
-                c = getopt_long(argc, argv,
-                                short_options, long_options, &idx);
-
-                if (-1 == c)
-                        break;
-
-                switch (c) {
-                case 0: /* getopt_long() flag */
-                        break;
-
-                case 'd':
-                        dev_name = optarg;
-                        break;
-
-                case 'h':
-                        usage(stdout, argc, argv);
-                        exit(EXIT_SUCCESS);
-
-                case 'm':
-                        io = IO_METHOD_MMAP;
-                        break;
-
-                case 'r':
-                        io = IO_METHOD_READ;
-                        break;
-
-                case 'u':
-                        io = IO_METHOD_USERPTR;
-                        break;
-
-                case 'o':
-                        out_buf++;
-                        break;
-
-                case 'f':
-                        force_format=1;
-                        break;
-
-		case 'F':
-			force_format=2;
-			break;
-
-                case 'c':
-                        errno = 0;
-                        frame_count = strtol(optarg, NULL, 0);
-                        if (errno)
-                                errno_exit(optarg);
-                        break;
-
-                default:
-                        usage(stderr, argc, argv);
-                        exit(EXIT_FAILURE);
-                }
-        }
-
+        force_format = 2;
+        out_buf++;
+        // errno = 0;
+        char opt = '0';
+        frame_count = strtol(&opt, NULL, 0);
+        if (errno) errno_exit(&opt);
         open_device();
         init_device();
         start_capturing();
@@ -676,5 +615,7 @@ int main(int argc, char **argv)
         uninit_device();
         close_device();
         fprintf(stderr, "\n");
+        closeConnectionT();
+        printf("Ending streaming\n");
         return 0;
 }

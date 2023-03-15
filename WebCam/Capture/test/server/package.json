@@ -4,7 +4,7 @@
 		"mime": "latest",
 		"ws": "latest"
 	},
-	"description": "Webcam video streaming",
+	"description": "Streaming video from webcam",
 	"name": "webcam-stream",
 	"type": "module",
 	"version": "0.0.1"
