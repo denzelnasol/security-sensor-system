@@ -1,7 +1,9 @@
 {
 	"dependencies": {
+		"http-server": "^14.1.1",
 		"jquery": "latest",
 		"mime": "latest",
+		"node": "^19.6.1",
 		"ws": "latest"
 	},
 	"description": "Webcam video streaming",

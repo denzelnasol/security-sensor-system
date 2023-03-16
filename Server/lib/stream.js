@@ -6,7 +6,7 @@
 import WebSocket, {WebSocketServer} from "ws";
 import dgram from "dgram";
 
-const UDP_STREAM_ADDR = "192.168.7.2";
+const UDP_STREAM_ADDR = "192.168.7.1";
 const UDP_STREAM_PORT = 8080;
 const WS_PORT = 8088;
 const wSocketServer = new WebSocketServer({
