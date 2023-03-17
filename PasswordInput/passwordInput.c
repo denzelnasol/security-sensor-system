@@ -1,55 +1,89 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <stdio.h>
-#include <pthread.h>
-
+#include <stdlib.h>
 
 #include "passwordInput.h"
-#include "../Joystick/joystick.h"
-#include "../Utilities/utilities.h"
+
+
+// #include "../Joystick/joystick.h"
+#include "../Menu/MockObjects/joystick.h"
 
 #define PASSWORD_LIMIT      10
-#define SLEEP_FREQUENCY_MS  10
 
 // ------------------------- PRIVATE ------------------------- //
 
-static JoystickInput password[PASSWORD_LIMIT];
-static PInputSequence inputSequence = {.input = NULL, .size = 0};
+typedef struct {
+    JoystickInput sequence[PASSWORD_LIMIT];
+    size_t size;
+} Sequence;
 
-void *getPasswordThread(void *args);
-static pthread_t s_passwordThreadId;
+static Sequence password;
+static Sequence sequence;
 
-void *getPasswordThread(void *args)
+static bool isPasswordValid()
 {
-    int index = 0;
-    JoystickInput input = JOYSTICK_NONE;
-    while (index < PASSWORD_LIMIT) {
-        input = Joystick_getPressed();
-        if (input == JOYSTICK_CENTER) {
-            break;
-        }
-        if (input != JOYSTICK_NONE) {
-
-            printf("%d\n", input);
-
-            password[index] = input;
-            index++;
-        }
-        Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
+    bool isValid = (password.size == sequence.size);
+    for (int i = 0; i < password.size; i++) {
+        isValid = isValid && (password.sequence[i] == sequence.sequence[i]);
     }
-    inputSequence.input = password;
-    inputSequence.size = index;
-    return NULL;
+    return isValid;
 }
+
+static bool Sequence_isFull(const Sequence *seq)
+{
+    return seq->size == PASSWORD_LIMIT;
+}
+
+// precondition: seq is not full
+static void Sequence_add(Sequence *seq, JoystickInput input)
+{
+    seq->sequence[seq->size] = input;
+    seq->size++;
+}
+
+static void Sequence_reset(Sequence *seq)
+{
+    seq->size = 0;
+}
+
 
 // ------------------------- PUBLIC ------------------------- //
 
-PInputSequence PasswordInput_getInputSequence(void)
+void PasswordInput_init(void)
 {
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_create(&s_passwordThreadId, &attr, getPasswordThread, NULL);
-    pthread_join(s_passwordThreadId, NULL);
-    return inputSequence;
+    // todo: read the password from a file
+    Sequence_add(&password, JOYSTICK_UP);
+    Sequence_add(&password, JOYSTICK_RIGHT);
+    Sequence_add(&password, JOYSTICK_DOWN);
+    Sequence_add(&password, JOYSTICK_LEFT);
+    Sequence_add(&password, JOYSTICK_CENTER);
+}
+void PasswordInput_cleanup(void)
+{
+    // do nothing
+}
+
+PInputState PasswordInput_sendNext(JoystickInput input)
+{
+    if (input == JOYSTICK_NONE) {
+        // ignore none inputs
+        return P_INPUT_CONTINUE;
+    }
+
+    if (Sequence_isFull(&sequence)) {
+        Sequence_reset(&sequence);
+        return P_INPUT_TOO_LONG;
+    }
+
+    Sequence_add(&sequence, input);
+
+    if (input == JOYSTICK_CENTER) {
+        PInputState state = isPasswordValid() ? P_INPUT_MATCH : P_INPUT_NO_MATCH;
+        Sequence_reset(&sequence);
+        return state;
+    }
+
+    return P_INPUT_CONTINUE;
 }
 
