@@ -149,15 +149,15 @@ static void toggle(char *response)
     }
 
     bool isOn = false;
-    if (strncmp(nextArg, DEVICE_CAMERA, sizeof(DEVICE_CAMERA))) {
+    if (strncmp(nextArg, DEVICE_CAMERA, sizeof(DEVICE_CAMERA)) == 0) {
         // camera.toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
 
-    } else if (strncmp(nextArg, DEVICE_LOGGER, sizeof(DEVICE_LOGGER))) {
+    } else if (strncmp(nextArg, DEVICE_LOGGER, sizeof(DEVICE_LOGGER)) == 0) {
         isOn = Logger_toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "logger now is %s\n", isOn ? "on": "off");
 
-    } else if (strncmp(nextArg, DEVICE_MOTION_SENSOR, sizeof(DEVICE_MOTION_SENSOR))) {
+    } else if (strncmp(nextArg, DEVICE_MOTION_SENSOR, sizeof(DEVICE_MOTION_SENSOR)) == 0) {
         // motionSensorController.toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "motion sensor now is %s\n", isOn ? "on": "off");
 
@@ -224,9 +224,9 @@ static void configureSettings(char *response)
         return;
     }
 
-    if (strncmp(nextArg, ARG2_CONF_AUTO_LOGOUT, sizeof(ARG2_CONF_AUTO_LOGOUT))) {
+    if (strncmp(nextArg, ARG2_CONF_AUTO_LOGOUT, sizeof(ARG2_CONF_AUTO_LOGOUT)) == 0) {
         configureAutoLogout(response);
-    } else if (strncmp(nextArg, ARG2_CONF_REMOTE_ACCESS, sizeof(ARG2_CONF_REMOTE_ACCESS))) {
+    } else if (strncmp(nextArg, ARG2_CONF_REMOTE_ACCESS, sizeof(ARG2_CONF_REMOTE_ACCESS)) == 0) {
         configureRemoteAccess(response);
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, 
@@ -256,13 +256,13 @@ static void configureAutoLogout(char *response)
         return;
     }
 
-    if (strncmp(nextArg, ARG3_CONF_AL_AFTER_30_SEC, sizeof(ARG3_CONF_AL_AFTER_30_SEC))) {
+    if (strncmp(nextArg, ARG3_CONF_AL_AFTER_30_SEC, sizeof(ARG3_CONF_AL_AFTER_30_SEC)) == 0) {
         Settings_setAutoLogoutSetting(SETTINGS_AL_AFTER_30_SEC);
 
-    } else if (strncmp(nextArg, ARG3_CONF_AL_AFTER_1_MIN, sizeof(ARG3_CONF_AL_AFTER_1_MIN))) {
+    } else if (strncmp(nextArg, ARG3_CONF_AL_AFTER_1_MIN, sizeof(ARG3_CONF_AL_AFTER_1_MIN)) == 0) {
         Settings_setAutoLogoutSetting(SETTINGS_AL_AFTER_1_MIN);
 
-    } else if (strncmp(nextArg, ARG3_CONF_AL_AFTER_2_MIN, sizeof(ARG3_CONF_AL_AFTER_2_MIN))) {
+    } else if (strncmp(nextArg, ARG3_CONF_AL_AFTER_2_MIN, sizeof(ARG3_CONF_AL_AFTER_2_MIN)) == 0) {
         Settings_setAutoLogoutSetting(SETTINGS_AL_AFTER_2_MIN);
 
     } else {
@@ -294,14 +294,14 @@ static void configureRemoteAccess(char *response)
         return;
     }
 
-    if (strncmp(nextArg, ARG3_CONF_RA_ENABLE_MFA, sizeof(ARG3_CONF_RA_ENABLE_MFA))) {
+    if (strncmp(nextArg, ARG3_CONF_RA_ENABLE_MFA, sizeof(ARG3_CONF_RA_ENABLE_MFA)) == 0) {
         Settings_setRemoteAccessPolicySetting(SETTINGS_RA_ENABLE_MFA);
 
-    } else if (strncmp(nextArg, ARG3_CONF_RA_DISABLE_MFA, sizeof(ARG3_CONF_RA_DISABLE_MFA))) {
+    } else if (strncmp(nextArg, ARG3_CONF_RA_DISABLE_MFA, sizeof(ARG3_CONF_RA_DISABLE_MFA)) == 0) {
         Settings_setRemoteAccessPolicySetting(SETTINGS_RA_DISABLE_MFA);
 
     } else if (strncmp(nextArg, ARG3_CONF_RA_DISABLE_REMOTE_ACCESS, 
-        sizeof(ARG3_CONF_RA_DISABLE_REMOTE_ACCESS))) 
+        sizeof(ARG3_CONF_RA_DISABLE_REMOTE_ACCESS)) == 0) 
     {
         Settings_setRemoteAccessPolicySetting(SETTINGS_RA_DISABLE_REMOTE_ACCESS);
 

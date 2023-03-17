@@ -106,7 +106,7 @@ static void login()
         printf("Already logged in.\n");
         return;
     }
-    char response[RELAY_PACKET_SIZE];
+    char response[RESPONSE_PACKET_SIZE];
 
     ClientNet_send(COMMAND_LOGIN, sizeof(COMMAND_LOGIN));
     ClientNet_receive(response);
@@ -122,11 +122,11 @@ static void login()
     ClientNet_send(password, strlen(password));
     ClientNet_receive(response);
 
-    if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK))) {
+    if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
         printf("Logged in as admin.\n");
         return;
-    } else if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD))) {
+    } else if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
         printf("Incorrect password.\n");
         return;
     }
@@ -142,10 +142,10 @@ static void login()
     ClientNet_send(mfaPassword, strlen(mfaPassword));
     ClientNet_receive(response);
 
-    if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK))) {
+    if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
         printf("Logged in as admin.\n");
-    } else if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD))) {
+    } else if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
         printf("Incorrect MFA code.\n");
     } else {
         printf("%s", response);
@@ -194,7 +194,7 @@ static void help()
 }
 static void clearScreen()
 {
-    Utilities_runCommand("clear");
+    system("clear");
 }
 
 // precondition: these functions require isLoggedIn = true
@@ -260,21 +260,27 @@ static Signal execute(char *command)
 
     } else if (strncmp(cmd, COMMAND_HELP, sizeof(COMMAND_HELP)) == 0) {
         help();
+        return SIGNAL_NONE;
 
     } else if (strncmp(cmd, COMMAND_CLEAR_SCREEN, sizeof(COMMAND_CLEAR_SCREEN)) == 0) {
         clearScreen();
+        return SIGNAL_NONE;
 
     } else if (strncmp(cmd, COMMAND_LOGIN, sizeof(COMMAND_LOGIN)) == 0) {
         login();
+        return SIGNAL_NONE;
 
     } else if (strncmp(cmd, COMMAND_LOGOUT, sizeof(COMMAND_LOGOUT)) == 0) {
         logout();
+        return SIGNAL_NONE;
 
     } else if (strncmp(cmd, COMMAND_GET_DANGER_LEVEL, sizeof(COMMAND_GET_DANGER_LEVEL)) == 0) {
         askServer(buffer);
+        return SIGNAL_NONE;
 
     } else if (strncmp(cmd, COMMAND_GET_NUM_TRIGGERS, sizeof(COMMAND_GET_NUM_TRIGGERS)) == 0) {
         askServer(buffer);
+        return SIGNAL_NONE;
     } 
     
     if (!isLoggedIn) {
