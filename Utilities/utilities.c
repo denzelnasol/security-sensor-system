@@ -55,6 +55,7 @@ int Utilities_readGpioValue(const char *pFilePath)
     int number = 0;
     if (fscanf(f, "%d", &number) == EOF) { 
         fprintf(stderr, "ERROR READING DATA");
+        fclose(f);
         exit(1);
     }
 
@@ -68,9 +69,7 @@ void Utilities_writeIntValueToFile(int value, const char* path) {
         printf("ERROR: Unable to open file to write int.\n");
         exit(1);
     }
-
     fprintf(pFile, "%d", value);
-
     fclose(pFile);
 }
 
@@ -102,6 +101,8 @@ void Utilities_writeStringValueToFile(const char* value, const char* path) {
     int charWritten = fputs(value, pFile);
     if (charWritten <= 0) {
         printf("ERROR WRITING DATA");
+        fclose(pFile);
         exit(1);
     }
+    fclose(pFile);
 }

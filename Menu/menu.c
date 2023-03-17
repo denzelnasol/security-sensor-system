@@ -167,16 +167,16 @@ static void configureAutoLogout(void);
 static void configureSecurityPolicy(void);
 static void doFromSubMenu(void);
 static Signal doFromMenu(void);
-static void checkDangerLevel(void);
-static void checkNumTriggers(void);
-static void navToggleMotionSensor(void);
-static void navToggleCamera(void);
-static void navToggleLogger(void);
-static void navSetDangerThreshold(void);
-static void navResetDangerThreshold(void);
-static void navResetDangerLevel(void);
-static void navConfigureAutoLogout(void);
-static void navConfigureSecurityPolicy(void); 
+static void setViewCheckDangerLevel(void);
+static void setViewCheckNumTriggers(void);
+static void setViewToggleMotionSensor(void);
+static void setViewToggleCamera(void);
+static void setViewToggleLogger(void);
+static void setViewSetDangerThreshold(void);
+static void setViewResetDangerThreshold(void);
+static void setViewResetDangerLevel(void);
+static void setViewConfigureAutoLogout(void);
+static void setViewConfigureSecurityPolicy(void); 
 
 
 static void next(StateInfo *state)
@@ -240,7 +240,8 @@ static void logout()
 static Signal login()
 {
     printf("loggin in\n");
-    // segmentDisplay.display(LOGIN_SCREEN);
+    LedDisplay_showSpecial();
+    
     Timer_start(inactivityTimeoutMs, &inactivityTimer);
 
     PInputState passwordStatus = P_INPUT_CONTINUE;
@@ -310,25 +311,23 @@ static void debugDisplay(int opt, int setIndicator)
 
 static void startGui() 
 {
-    debugDisplay(currentState.state->currentOpt, 0);
+    // debugDisplay(currentState.state->currentOpt, 0);
 
     Signal signal = SIGNAL_CONTINUE;
     while (signal != SIGNAL_EXIT) {
         //---- update MENU model -----//
         signal = processUserInput();
 
-        //---- update display -----//
+        //---- update SEGMENT DISPLAY view -----//
 
         // display the right-side decimal point to indicate that this option is currently active
         if (currentState.state->selectedOpt == MATCH_ALL_SELECTION_INDICATOR_VALUE || 
             (currentState.type == STATE_SUBMENU && subMenu.currentOpt == subMenu.selectedOpt)) 
         {
-            // segmentDisplay.display(currentOpt, S16_SET_INDICATOR);
-            LedDisplay_setDisplayNumber(currentState.state->currentOpt);
+            LedDisplay_setDisplayNumber(currentState.state->currentOpt, S16_SET_INDICATOR);
             // debugDisplay(currentState.state->currentOpt, 1);
         } else {
-            // segmentDisplay.display(currentOpt, S16_SET_NONE);
-            LedDisplay_setDisplayNumber(currentState.state->currentOpt);
+            LedDisplay_setDisplayNumber(currentState.state->currentOpt, S16_SET_NONE);
             // debugDisplay(currentState.state->currentOpt, 0);
         }
     }
@@ -541,7 +540,7 @@ static void doFromSubMenu()
     }
 }
 
-// if there is a submenu then this function will just navigate to the submenu
+// if there is a submenu then this function will just setViewigate to the submenu
 // otherwise it will perform the action
 // precondition: currentState.type == menu
 // postcondition: currentState.type == submenu unless it is logout
@@ -556,34 +555,34 @@ static Signal doFromMenu()
         case OPT_LOGOUT_OR_LOGIN:
             return logoutOrLogin();
         case OPT_CHECK_DANGER:
-            checkDangerLevel();
+            setViewCheckDangerLevel();
             break;
         case OPT_CHECK_TRIGGERS:
-            checkNumTriggers();
+            setViewCheckNumTriggers();
             break;
         case OPT_TOGGLE_MOTION_SENSOR:
-            navToggleMotionSensor();
+            setViewToggleMotionSensor();
             break;
         case OPT_TOGGLE_CAMERA:
-            navToggleCamera();
+            setViewToggleCamera();
             break;
         case OPT_TOGGLE_LOGGER:
-            navToggleLogger();
+            setViewToggleLogger();
             break;
         case OPT_SET_DANGER_THRESHOLD:
-            navSetDangerThreshold();
+            setViewSetDangerThreshold();
             break;
         case OPT_RESET_DANGER_THRESHOLD:
-            navResetDangerThreshold();
+            setViewResetDangerThreshold();
             break;
         case OPT_RESET_DANGER_LEVEL:
-            navResetDangerLevel();
+            setViewResetDangerLevel();
             break;
         case OPT_CONFIGURE_AUTO_LOGOUT_TIMOUT:
-            navConfigureAutoLogout();
+            setViewConfigureAutoLogout();
             break;
         case OPT_CONFIGURE_SECURITY_POLICY:
-            navConfigureSecurityPolicy();
+            setViewConfigureSecurityPolicy();
             break;
         default:
             assert(false);
@@ -591,7 +590,7 @@ static Signal doFromMenu()
     return SIGNAL_CONTINUE;
 }
 
-static void checkDangerLevel()
+static void setViewCheckDangerLevel()
 {
     subMenu.selectedOpt = MATCH_NONE_SELECTION_INDICATOR_VALUE;
 
@@ -599,56 +598,56 @@ static void checkDangerLevel()
     subMenu.numOpts = 0;
     // subMenu.currentOpt = analyzer.getDangerLevel();
 }
-static void checkNumTriggers()
+static void setViewCheckNumTriggers()
 {
     subMenu.selectedOpt = MATCH_NONE_SELECTION_INDICATOR_VALUE;
     subMenu.numOpts = 0;
     // subMenu.currentOpt = motionSensorController.getTriggerCount();
 }
 
-static void navToggleMotionSensor()
+static void setViewToggleMotionSensor()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
     // subMenu.selectedOpt = (int)motionSensorController.getToggleState();
 }
-static void navToggleCamera()
+static void setViewToggleCamera()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
     // subMenu.selectedOpt = (int)camera.getToggleState();
 }
-static void navToggleLogger()
+static void setViewToggleLogger()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
     // subMenu.selectedOpt = (int)logger.getToggleState();
 }
-static void navSetDangerThreshold()
+static void setViewSetDangerThreshold()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = 100;
     // subMenu.selectedOpt = (int)settings.getDangerThreshold();
 }
-static void navResetDangerThreshold()
+static void setViewResetDangerThreshold()
 {
     subMenu.selectedOpt = MATCH_NONE_SELECTION_INDICATOR_VALUE;
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
 }
-static void navResetDangerLevel()
+static void setViewResetDangerLevel()
 {
     subMenu.selectedOpt = MATCH_NONE_SELECTION_INDICATOR_VALUE;
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
 }
-static void navConfigureAutoLogout()
+static void setViewConfigureAutoLogout()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)SOPT_AL_SENTINEL_MAX;
     // subMenu.selectedOpt = (int)settings.getAutoLogoutConfigurationOption();
 }
-static void navConfigureSecurityPolicy() 
+static void setViewConfigureSecurityPolicy() 
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)SOPT_RA_SENTINEL_MAX;

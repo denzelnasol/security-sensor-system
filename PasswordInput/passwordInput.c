@@ -6,8 +6,8 @@
 #include "passwordInput.h"
 
 
-// #include "../Joystick/joystick.h"
-#include "../Menu/MockObjects/joystick.h"
+#include "../Joystick/joystick.h"
+// #include "../Menu/MockObjects/joystick.h"
 
 #define PASSWORD_LIMIT      10
 

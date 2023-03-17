@@ -3,8 +3,8 @@
 
 #include <stdlib.h>
 
-// #include "../Joystick/joystick.h"
-#include "../Menu/MockObjects/joystick.h"
+#include "../Joystick/joystick.h"
+// #include "../Menu/MockObjects/joystick.h"
 
 typedef enum {
     P_INPUT_CONTINUE,

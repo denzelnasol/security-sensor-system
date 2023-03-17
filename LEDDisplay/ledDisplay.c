@@ -45,21 +45,30 @@
 
 #define I2C_DEVICE_ADDRESS              0x20
 
-#define REG_DIRA                        0x00
-#define REG_DIRB                        0x01
-#define REG_OUTA                        0x14
-#define REG_OUTB                        0x15
+#define REG_LOWER                        0x14
+#define REG_UPPER                        0x15
 
-#define HEX_DISPLAY_OFF                 0x00
+#define SPECIAL_SYMBOL_LOWER            0x1e
+#define SPECIAL_SYMBOL_UPPER            0x78
+
+
 #define BASE_TEN                        10
 #define LED_DISPLAY_MAX_NUM             99
+
+#define INDICATOR_BIT                   0x40
 
 #define SLEEP_MS                        10
 
 typedef struct {
-    int left;
-    int right;
-} LEDDigits;
+    unsigned char upper;
+    unsigned char lower; 
+} Digit;
+
+typedef struct {
+    Digit msd;
+    Digit lsd;
+    bool isSpecial;
+} Number;
 
 // Each element represents a number's respective half from 0 to 9
 static const unsigned char UPPER_EIGHT_BITS[BASE_TEN] = {
@@ -74,7 +83,7 @@ static int s_i2cFileDesc;
 
 static pthread_t s_ledDisplayThread;
 
-static LEDDigits s_ledDigits = {.left = 0, .right = 0};
+static Number s_ledDigits;
 
 static pthread_mutex_t s_digitsMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -156,22 +165,36 @@ static void sendExitSignal()
 // switches quickly between the left and right digit so it appears to display both at the same time
 static void *displayLEDDigits(void *args) 
 {
+    Digit rightVal, leftVal;
+    bool isSpecial = false;
     while (!receivedExitSignal()) {
-
-        int rightVal = 0;
-        int leftVal = 0;
         pthread_mutex_lock(&s_digitsMutex);
         {
             rightVal = s_ledDigits.right;
             leftVal = s_ledDigits.left;
+            isSpecial = s_ledDigits.isSpecial;
         }
         pthread_mutex_unlock(&s_digitsMutex);
+
+        if (isSpecial) {
+            turnLEDDisplayOnOrOff(OFF, LEFT_LED_GPIO_61_VALUE_PATH);
+            turnLEDDisplayOnOrOff(OFF, RIGHT_LED_GPIO_44_VALUE_PATH);
+
+            writeI2cReg(s_i2cFileDesc, REG_UPPER, SPECIAL_SYMBOL_UPPER);
+            writeI2cReg(s_i2cFileDesc, REG_LOWER, SPECIAL_SYMBOL_LOWER);
+
+            turnLEDDisplayOnOrOff(ON, RIGHT_LED_GPIO_44_VALUE_PATH);
+            turnLEDDisplayOnOrOff(ON, LEFT_LED_GPIO_61_VALUE_PATH);
+
+            Utilities_sleepForMs(SLEEP_MS);
+            continue;
+        }
 
         turnLEDDisplayOnOrOff(OFF, LEFT_LED_GPIO_61_VALUE_PATH);
         turnLEDDisplayOnOrOff(OFF, RIGHT_LED_GPIO_44_VALUE_PATH);
 
-        writeI2cReg(s_i2cFileDesc, REG_OUTB, UPPER_EIGHT_BITS[rightVal]);
-        writeI2cReg(s_i2cFileDesc, REG_OUTA, LOWER_EIGHT_BITS[rightVal]);
+        writeI2cReg(s_i2cFileDesc, REG_UPPER, rightVal.upper);
+        writeI2cReg(s_i2cFileDesc, REG_LOWER, rightVal.lower);
 
         // Display right digit
         turnLEDDisplayOnOrOff(ON, RIGHT_LED_GPIO_44_VALUE_PATH);
@@ -183,8 +206,8 @@ static void *displayLEDDigits(void *args)
             turnLEDDisplayOnOrOff(OFF, LEFT_LED_GPIO_61_VALUE_PATH);
             turnLEDDisplayOnOrOff(OFF, RIGHT_LED_GPIO_44_VALUE_PATH);
 
-            writeI2cReg(s_i2cFileDesc, REG_OUTB, UPPER_EIGHT_BITS[leftVal]);
-            writeI2cReg(s_i2cFileDesc, REG_OUTA, LOWER_EIGHT_BITS[leftVal]);
+            writeI2cReg(s_i2cFileDesc, REG_UPPER, leftVal.upper);
+            writeI2cReg(s_i2cFileDesc, REG_LOWER, leftVal.lower);
 
             turnLEDDisplayOnOrOff(ON, LEFT_LED_GPIO_61_VALUE_PATH);
 
@@ -210,9 +233,6 @@ void LedDisplay_start()
 
     s_i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
 
-    writeI2cReg(s_i2cFileDesc, REG_DIRB, HEX_DISPLAY_OFF);
-    writeI2cReg(s_i2cFileDesc, REG_DIRA, HEX_DISPLAY_OFF);
-
     // start the thread
     initiateLEDDisplayThread();
 }
@@ -228,7 +248,7 @@ void LedDisplay_stop()
     close(s_i2cFileDesc);
 }
 
-void LedDisplay_setDisplayNumber(int number) 
+void LedDisplay_setDisplayNumber(int number, unsigned int indicatorOptions) 
 {
     if (number > LED_DISPLAY_MAX_NUM) {
         number = LED_DISPLAY_MAX_NUM;
@@ -236,11 +256,33 @@ void LedDisplay_setDisplayNumber(int number)
         number = 0;
     }
 
+    Digit lsd, msd;
+    int lsdDigit = number % BASE_TEN;
+    int msdDigit = (number / BASE_TEN) % BASE_TEN;
+    lsd.upper = UPPER_EIGHT_BITS[lsdDigit];
+    msd.upper = UPPER_EIGHT_BITS[msdDigit];
+    lsd.lower = LOWER_EIGHT_BITS[lsdDigit];
+    msd.lower = LOWER_EIGHT_BITS[msdDigit];
+
+    if ((indicatorOptions & S16_SET_INDICATOR) == S16_SET_INDICATOR) {
+        msd.lower += INDICATOR_BIT;
+    }
+
     pthread_mutex_lock(&s_digitsMutex);
     {
-        s_ledDigits.right = number % BASE_TEN;
-        number /= BASE_TEN;
-        s_ledDigits.left = number % BASE_TEN;
+        s_ledDigits.lsd = lsd;
+        s_ledDigits.msd = msd;
+        s_ledDigits.isSpecial = false;
     }
     pthread_mutex_unlock(&s_digitsMutex);
 }
+
+void LedDisplay_showSpecial(void)
+{
+    pthread_mutex_lock(&s_digitsMutex);
+    {
+        s_ledDigits.isSpecial = true;
+    }
+    pthread_mutex_unlock(&s_digitsMutex);
+}
+
