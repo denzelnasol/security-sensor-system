@@ -12,13 +12,13 @@
 
 #define DANGER_THRESHOLD_DEFAULT    0.75
 
-void* listenerThread(void* arg);
-static pthread_t s_threadId;
-static bool s_stoppingSignal = false;
-static pthread_mutex_t s_stoppingMutex = PTHREAD_MUTEX_INITIALIZER;
+static void *mainloop(void* arg);
+static pthread_t s_thread;
+static bool s_stop = false;
+static pthread_mutex_t s_stopMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_mutex_t s_dangerThresholdMutex = PTHREAD_MUTEX_INITIALIZER;
-static double dangerThreshold = DANGER_THRESHOLD_DEFAULT;
+static int dangerThreshold = DANGER_THRESHOLD_DEFAULT;
 
 static pthread_mutex_t s_dangerLevelMutex = PTHREAD_MUTEX_INITIALIZER;
 static double dangerLevel = 0;
@@ -28,20 +28,20 @@ static double dangerLevel = 0;
 static bool isStoppingSignalReceived()
 {
     bool received = false;
-    pthread_mutex_lock(&s_stoppingMutex);
+    pthread_mutex_lock(&s_stopMutex);
     {
-        received = s_stoppingSignal;
+        received = s_stop;
     }
-    pthread_mutex_unlock(&s_stoppingMutex);
+    pthread_mutex_unlock(&s_stopMutex);
     return received;
 }
 static void sendStoppingSignal()
 {
-    pthread_mutex_lock(&s_stoppingMutex);
+    pthread_mutex_lock(&s_stopMutex);
     {
-        s_stoppingSignal = true;
+        s_stop = true;
     }
-    pthread_mutex_unlock(&s_stoppingMutex);
+    pthread_mutex_unlock(&s_stopMutex);
 }
 
 static double getDangerThreshold()
@@ -82,12 +82,15 @@ static double computeNewDangerLevel(double dLevel, double trFreq, double ltts, i
     return HISTORY_WEIGHT * dLevel + (1 - HISTORY_WEIGHT) * newDLevel;
 }
 
-void *listenerThread(void *args)
+static void *mainloop(void *args)
 {
     while (!isStoppingSignalReceived()) {
         // double triggerFreq = motion.getFrequency();
         // double lastTriggerTime = motion.getTimeSinceLastTriggerInSeconds();
         // int triggerCount = motion.getNumTriggers()
+        double triggerFreq = 0;
+        double lastTriggerTime = 0;
+        int triggerCount = 0;
 
         // compute new danger level
         double level = 0;
@@ -103,6 +106,7 @@ void *listenerThread(void *args)
             // 
         }
     }
+    return NULL;
 }
 
 
@@ -112,10 +116,10 @@ void DangerAnalyzer_start(void)
 {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_create(&s_threadId, &attr, listenerThread, NULL);
+    pthread_create(&s_thread, &attr, mainloop, NULL);
 }
 
-void DangerAnalyzer_setThreshold(double dangerThresholdPercent)
+void DangerAnalyzer_setThreshold(int dangerThresholdPercent)
 {
     pthread_mutex_lock(&s_dangerThresholdMutex);
     {
@@ -154,7 +158,7 @@ double DangerAnalyzer_getDangerLevel(void)
 void DangerAnalyzer_stop(void)
 {
     sendStoppingSignal();
-    pthread_join(s_threadId, NULL);
+    pthread_join(s_thread, NULL);
 }
 
 

@@ -32,7 +32,7 @@ static pthread_mutex_t s_toggleMutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 // source: https://stackoverflow.com/questions/1442116/how-to-get-the-date-and-time-values-in-a-c-program
-static void getTimeStamp(const char *timeStampBuffer, size_t size)
+static void getTimeStamp(char *timeStampBuffer, size_t size)
 {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);

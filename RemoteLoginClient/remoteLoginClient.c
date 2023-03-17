@@ -62,34 +62,31 @@ typedef enum {
 static bool isLoggedIn = false;
 static int exitCode = EXIT_CODE_STANDARD;
 
+static void sigintHandler(int sig_num);
+static void askServer(char *command);
+static void login(void);
+static void logout(void); 
+static void help(void);
+static void clearScreen(void);
+static void dumpLogs(void);
+static void clearLogs(void);
+static void accessHost(void);
+static void stop(void);
+static void resetDangerThreshold(void);
+static void resetDangerLevel(void);
+
+static Signal execute(char *command);
+static void prompt(void);
+static void displayWarning(void);
+
+
 // the user cannot 'ctrl+c' to terminate the program.
 // source: https://www.geeksforgeeks.org/write-a-c-program-that-doesnt-terminate-when-ctrlc-is-pressed/
-void sigintHandler(int sig_num)
+static void sigintHandler(int sig_num)
 {
     /* Reset handler to catch SIGINT next time.
     Refer http://en.cppreference.com/w/c/program/signal */
     signal(SIGINT, sigintHandler);
-}
-
-static bool parseNumber(const char *number, int *result) 
-{
-    char *end;
-    long num = strtol(number, &end, 10);
-
-    // error handling from https://en.cppreference.com/w/c/string/byte/strtol
-    if (number == end) {
-        // not in the correct format
-        printf("not a number\n");
-        return false;
-    }
-    if (errno == ERANGE || (num > INT_MAX || num < INT_MIN)) {
-        // range error
-        printf("number must be between %d and %d\n", INT_MIN, INT_MAX);
-        return false;
-    }
-
-    *result = (int)num;
-    return true;
 }
 
 // asks the server for the answer and then prints the response

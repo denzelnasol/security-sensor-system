@@ -1,6 +1,9 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 typedef enum {
     SETTINGS_AL_AFTER_30_SEC,
     SETTINGS_AL_AFTER_1_MIN,
@@ -25,5 +28,8 @@ void Settings_setRemoteAccessPolicySetting(SettingsRAOpt setting);
 
 int Settings_getDangerThresholdSetting(void);
 void Settings_setDangerThresholdSetting(int newThreshold);
+
+bool Settings_passwordIsValid(const char *password);
+void Settings_changePassword(const char *newPassword, size_t size);
 
 #endif

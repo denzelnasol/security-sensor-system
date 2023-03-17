@@ -38,7 +38,7 @@ void ServerNet_init(void) {
 }
 
 // will add a 0 character at the end of message
-void ServerNet_receiveMessage(char *message) {
+void ServerNet_receive(char *message) {
     unsigned int sin_len = sizeof(sinRemote);
     int bytesRx = recvfrom(
         socketDescriptor, 
@@ -53,7 +53,7 @@ void ServerNet_receiveMessage(char *message) {
 
 
 // sends everything in message to host
-void ServerNet_sendResponse(const char *message, int numBytes) {
+void ServerNet_send(const char *message, int numBytes) {
     sendto(
         socketDescriptor, 
         message, 

@@ -1,21 +1,65 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 
 #include "settings.h"
 
 #define SETTING_PATH            "./settings.txt"
+#define PASSWORD_PATH           "./password.txt"
+#define PASSWORD_BUFFER_SIZE    32
 
 // ------------------------- PRIVATE ------------------------- //
 
 static SettingsALOpt autoLogoutSetting;
 static SettingsRAOpt remoteAccessSetting;
 static int dangerThresholdSetting;
+static char remoteAdminPassword[PASSWORD_BUFFER_SIZE] = {0};
 
 static pthread_mutex_t s_almutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_ramutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_dtmutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t s_passwordMutex = PTHREAD_MUTEX_INITIALIZER;
 
+static void getPassword()
+{
+    FILE *pFile = fopen(PASSWORD_PATH, "r");
+    if (pFile == NULL) {
+        printf("ERROR: Unable to open file to write string.\n");
+        return;
+    }
+    fgets(remoteAdminPassword, PASSWORD_BUFFER_SIZE, pFile);
+    remoteAdminPassword[strcspn(remoteAdminPassword, "\n")] = 0;
+    fclose(pFile);
+}
+static void savePassword()
+{
+    FILE *pFile = fopen(PASSWORD_PATH, "w");
+    if (pFile == NULL) {
+        printf("ERROR: Unable to open file to write string.\n");
+        return;
+    }
+    if (fputs(remoteAdminPassword, pFile) == EOF) {
+        printf("ERROR: unable to write to file: password.txt\n");
+        fclose(pFile);
+        return;
+    }
+    fclose(pFile);
+}
+static bool isValid(const char *password)
+{
+    return strncmp(remoteAdminPassword, password, PASSWORD_BUFFER_SIZE) == 0;
+}
+static void setPassword(const char *password, size_t size)
+{
+    size_t len = PASSWORD_BUFFER_SIZE;
+    if (size < len) {
+        len = size;
+    }
+    snprintf(remoteAdminPassword, len, "%s", password);
+    remoteAdminPassword[strcspn(remoteAdminPassword, "\n")] = 0;
+}
 
 // ------------------------- PUBLIC ------------------------- //
 
@@ -35,6 +79,9 @@ void Settings_init(void)
         return;
     }
     fclose(pFile);
+
+    // get the password
+    getPassword();
 }
 void Settings_cleanup(void)
 {
@@ -48,6 +95,9 @@ void Settings_cleanup(void)
     fprintf(pFile, "%d %d %d", 
         (int)autoLogoutSetting, (int)remoteAccessSetting, dangerThresholdSetting);
     fclose(pFile);
+
+    // save the password
+    savePassword();
 }
 
 SettingsALOpt Settings_getAutoLogoutSetting(void)
@@ -105,4 +155,22 @@ void Settings_setDangerThresholdSetting(int newThreshold)
         dangerThresholdSetting = newThreshold;
     }
     pthread_mutex_unlock(&s_dtmutex);
+}
+bool Settings_passwordIsValid(const char *password)
+{
+    bool res = false;
+    pthread_mutex_lock(&s_passwordMutex);
+    {
+        res = isValid(password);
+    }
+    pthread_mutex_unlock(&s_passwordMutex);
+    return res;
+}
+void Settings_changePassword(const char *newPassword, size_t size)
+{
+    pthread_mutex_lock(&s_passwordMutex);
+    {
+        setPassword(newPassword, size);
+    }
+    pthread_mutex_unlock(&s_passwordMutex);
 }

@@ -19,8 +19,8 @@ CLIENT_DEPS = Utilities/utilities.c EventLogger/logger.c RemoteLoginClient/clien
 CLIENT_SRC = $(CLIENT_DEPS)
 CLIENT = RemoteLoginClient/remoteLoginClient.c
 
-SERVER_DEPS = ResponseHandler/serverNet.c EventLogger/logger.c Settings/settings.c LEDMFA/ledMfa.c DangerAnalyzer/dangerAnalyzer.c
-OTHER_DEPS = Utilities/utilities.c Timer/timer.c
+SERVER_DEPS = ResponseHandler/serverNet.c EventLogger/logger.c Settings/settings.c
+OTHER_DEPS = Utilities/utilities.c Timer/timer.c LEDMFA/ledMfa.c DangerAnalyzer/dangerAnalyzer.c
 SERVER_SRC = $(SERVER_DEPS) $(OTHER_DEPS)
 SERVER = ResponseHandler/responseHandler.c
 
@@ -35,8 +35,8 @@ wsl:
 	# gcc $(CFLAGS) $(SERVER) $(SERVER_DEPENDENCIES) -o  ../build/server
 	# gcc $(CFLAGS) $(MENU) $(DEPENDENCIES) -o  ../build/menu
 
-	$(CC_C) $(CFLAGS) -pthread $(SERVER) $(SERVER_SRC) -o  $(OUTDIR)/server -lpthread
-	$(CC_C) $(CFLAGS) -pthread $(CLIENT) $(CLIENT_SRC) -o  $(OUTDIR)/client -lpthread
+	gcc $(CFLAGS) -pthread $(SERVER) $(SERVER_SRC) -o  ../build/server -lpthread
+	gcc $(CFLAGS) -pthread $(CLIENT) $(CLIENT_SRC) -o  ../build/client -lpthread
 
 
 clean:

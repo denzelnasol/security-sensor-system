@@ -22,10 +22,10 @@
 #define REFRESH_MFA_FREQ_MS     30000
 
 static Timer timer;
-static char currentCode[MFA_PASSWORD_LIMIT] = 0;
+static char currentCode[MFA_PASSWORD_LIMIT] = {0};
 
 
-void *mainloop(void *args);
+static void *mainloop(void *args);
 static bool s_stop = false;
 static pthread_t s_thread;
 static pthread_mutex_t s_stopMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -85,24 +85,29 @@ static char getRandomBit()
 {
     return rand() % 2 ? '1' : '0';
 }
+static bool isValid(char ch)
+{
+    return ch == '0' || ch == '1';
+}
 
-void *mainloop(void *args)
+static void *mainloop(void *args)
 {
     char code[MFA_PASSWORD_LIMIT];
     while (!receivedExitSignal()) {
         if (Timer_isExpired(&timer)) {
             Timer_start(REFRESH_MFA_FREQ_MS, &timer);
 
-            code[0] = getRandomBit()
-            code[1] = getRandomBit()
-            code[2] = getRandomBit()
-            code[3] = getRandomBit()
+            code[0] = getRandomBit();
+            code[1] = getRandomBit();
+            code[2] = getRandomBit();
+            code[3] = getRandomBit();
 
             displayCode(code);
             setCurrentCode(code);
         }
         Utilities_sleepForMs(SLEEP_MS);
     }
+    return NULL;
 }
 
 // ------------------------- PUBLIC ------------------------- //
@@ -120,11 +125,7 @@ void Mfa_stop(void)
     sendExitSignal();
     pthread_join(s_thread, NULL);
 }
-bool isValid(char ch)
-{
-    return ch == '0' || ch == '1';
-}
-bool Mfa_getMatchStatus(char *codeSequence, size_t size)
+bool Mfa_isValid(char *codeSequence, size_t size)
 {
     char code[MFA_PASSWORD_LIMIT];
     getCurrentCode(code);
@@ -145,7 +146,7 @@ bool Mfa_getMatchStatus(char *codeSequence, size_t size)
         }
         idx++;
     }
-    if (code < MFA_PASSWORD_LIMIT) {
+    if (idx < MFA_PASSWORD_LIMIT) {
         return false;
     }
     return true;

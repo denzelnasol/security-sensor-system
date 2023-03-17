@@ -40,7 +40,28 @@
 #define DANGER_THRESHOLD_MIN                    0
 #define DANGER_THRESHOLD_MAX                    99
 
-static bool parseNumber(const char *number, int *result, char *response) 
+typedef enum {
+    SIGNAL_NONE,
+    SIGNAL_STOP,
+} Signal;
+
+
+static bool parseNumber(const char *number, int *result, char *response);
+static void getDangerLevel(char *response);
+static void getNumTriggers(char *response);
+static void loginMFA(void);
+static void login(char *response);
+static void toggle(char *response);
+static void resetDangerThreshold(char *response);
+static void resetDangerLevel(char *response);
+static void setDangerThreshold(char *response);
+static void configureSettings(char *response);
+static void configureAutoLogout(char *response);
+static void configureRemoteAccess(char *response);
+static Signal execute(char *command, char *response);
+
+
+static bool parseNumber(const char *number, int *result, char *response)
 {
     char *end;
     long num = strtol(number, &end, 10);
@@ -98,7 +119,7 @@ static void login(char *response)
     ServerNet_receive(password);
     password[strcspn(password, "\n")] = 0;
 
-    if (!isPasswordCorrect(password)) {
+    if (!Settings_passwordIsValid(password)) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
         return;
     }
@@ -133,7 +154,7 @@ static void toggle(char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
 
     } else if (strncmp(nextArg, DEVICE_LOGGER, sizeof(DEVICE_LOGGER))) {
-        bool isOn = Logger_toggle();
+        isOn = Logger_toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "logger now is %s\n", isOn ? "on": "off");
 
     } else if (strncmp(nextArg, DEVICE_MOTION_SENSOR, sizeof(DEVICE_MOTION_SENSOR))) {
@@ -152,7 +173,6 @@ static void toggle(char *response)
         );
     }
 }
-
 static void resetDangerThreshold(char *response)
 {
     Settings_setDangerThresholdSetting(DANGER_ANALYZER_DEFAULT_THRESHOLD);
@@ -298,11 +318,6 @@ static void configureRemoteAccess(char *response)
     }
 }
 
-typedef enum {
-    SIGNAL_NONE,
-    SIGNAL_STOP,
-} Signal;
-
 static Signal execute(char *command, char *response)
 {
     // getting the first part of the command
@@ -362,12 +377,12 @@ void ResponseHandler_start(void)
     }
 
     ServerNet_cleanup();
-    return 0;
 }
 
 int main(int argc, char **argv)
 {
     printf("starting server\n");
     ResponseHandler_start();
+    return 0;
 }
 
