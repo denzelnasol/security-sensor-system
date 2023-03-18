@@ -16,6 +16,7 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+#include <termios.h>
 
 #include "clientNet.h"
 
@@ -24,7 +25,6 @@
 #include "../EventLogger/logger.h"
 
 #define PASSWORD_LENGTH                         32
-#define BUFFER_LIMIT                            512
 #define MFA_BUFFER_SIZE                         4
 
 #define WHITESPACE                              " \n\r\t"
@@ -51,6 +51,8 @@
 
 #define EXIT_CODE_HACCESS                       EXIT_SUCCESS
 #define EXIT_CODE_STANDARD                      1
+#define ASCII_CYAN                              "\033[96;1m"
+#define ASCII_RESET                             "\033[0m"
 
 
 typedef enum {
@@ -78,7 +80,6 @@ static void resetDangerLevel(void);
 static Signal execute(char *command);
 static void prompt(void);
 static void displayWarning(void);
-
 
 // the user cannot 'ctrl+c' to terminate the program.
 // source: https://www.geeksforgeeks.org/write-a-c-program-that-doesnt-terminate-when-ctrlc-is-pressed/
@@ -114,9 +115,17 @@ static void login()
     printf("%s", response);
 
     // prmpt user for password
+    struct termios term;
+    tcgetattr(fileno(stdin), &term);
+
+    term.c_lflag &= ~ECHO;
+    tcsetattr(fileno(stdin), 0, &term);
+
     char password[PASSWORD_LENGTH];
     fgets(password, sizeof(password), stdin);
-    password[strcspn(password, "\n")] = 0;
+
+    term.c_lflag |= ECHO;
+    tcsetattr(fileno(stdin), 0, &term);
 
     // send to the server
     ClientNet_send(password, strlen(password));
@@ -136,7 +145,6 @@ static void login()
     // prmpt user for mfa code
     char mfaPassword[MFA_BUFFER_SIZE];
     fgets(mfaPassword, sizeof(mfaPassword), stdin);
-    mfaPassword[strcspn(mfaPassword, "\n")] = 0;
 
     // send to the server
     ClientNet_send(mfaPassword, strlen(mfaPassword));
@@ -158,7 +166,7 @@ static void logout()
         return;
     }
     isLoggedIn = false;
-    printf("Logout ok.");
+    printf("Logout ok.\n");
 }
 static void help()
 {
@@ -167,7 +175,6 @@ static void help()
             "Available commands:\n"
             COMMAND_GET_DANGER_LEVEL ": gets the danger level\n"
             COMMAND_GET_NUM_TRIGGERS ": gets the number of triggers\n"
-            COMMAND_LOGIN ": login as admin\n"
             COMMAND_END_SESSION ": ends the ssh session\n"
             COMMAND_CLEAR_SCREEN ": clears the screen\n"
             COMMAND_TOGGLE ": toggles the device\n"
@@ -326,10 +333,10 @@ static Signal execute(char *command)
 static void prompt()
 {
     if (isLoggedIn) {
-        printf("admin@thebbg> ");
+        printf(ASCII_CYAN "admin@thebbg> " ASCII_RESET);
         return;
     }
-    printf("guest@thebbg> ");
+    printf(ASCII_CYAN "guest@thebbg> " ASCII_RESET);
 }
 static void displayWarning()
 {
@@ -341,9 +348,9 @@ static void displayWarning()
 
 int main(int argc, char **argv)
 {
+    // signal(SIGINT, sigintHandler);
     ClientNet_init();
 
-    // signal(SIGINT, sigintHandler);
     displayWarning();
 
     char command[RELAY_PACKET_SIZE];
@@ -352,12 +359,10 @@ int main(int argc, char **argv)
     while(signal != SIGNAL_STOP) {
         prompt();
         fgets(command, sizeof(command), stdin);
-        command[strcspn(command, "\n")] = 0;
         signal = execute(command);
     }
 
     ClientNet_cleanup();
-
     return exitCode;
 }
 

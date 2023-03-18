@@ -258,12 +258,15 @@ static void configureAutoLogout(char *response)
 
     if (strncmp(nextArg, ARG3_CONF_AL_AFTER_30_SEC, sizeof(ARG3_CONF_AL_AFTER_30_SEC)) == 0) {
         Settings_setAutoLogoutSetting(SETTINGS_AL_AFTER_30_SEC);
+        snprintf(response, RESPONSE_PACKET_SIZE, "system configured to logout after 30 seconds.");
 
     } else if (strncmp(nextArg, ARG3_CONF_AL_AFTER_1_MIN, sizeof(ARG3_CONF_AL_AFTER_1_MIN)) == 0) {
         Settings_setAutoLogoutSetting(SETTINGS_AL_AFTER_1_MIN);
+        snprintf(response, RESPONSE_PACKET_SIZE, "system configured to logout after 1 min.");
 
     } else if (strncmp(nextArg, ARG3_CONF_AL_AFTER_2_MIN, sizeof(ARG3_CONF_AL_AFTER_2_MIN)) == 0) {
         Settings_setAutoLogoutSetting(SETTINGS_AL_AFTER_2_MIN);
+        snprintf(response, RESPONSE_PACKET_SIZE, "system configured to logout after 2 mins.");
 
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, 
@@ -296,14 +299,17 @@ static void configureRemoteAccess(char *response)
 
     if (strncmp(nextArg, ARG3_CONF_RA_ENABLE_MFA, sizeof(ARG3_CONF_RA_ENABLE_MFA)) == 0) {
         Settings_setRemoteAccessPolicySetting(SETTINGS_RA_ENABLE_MFA);
+        snprintf(response, RESPONSE_PACKET_SIZE, "system MFA authentication enabled.");
 
     } else if (strncmp(nextArg, ARG3_CONF_RA_DISABLE_MFA, sizeof(ARG3_CONF_RA_DISABLE_MFA)) == 0) {
         Settings_setRemoteAccessPolicySetting(SETTINGS_RA_DISABLE_MFA);
+        snprintf(response, RESPONSE_PACKET_SIZE, "system MFA authentication disabled.");
 
     } else if (strncmp(nextArg, ARG3_CONF_RA_DISABLE_REMOTE_ACCESS, 
         sizeof(ARG3_CONF_RA_DISABLE_REMOTE_ACCESS)) == 0) 
     {
         Settings_setRemoteAccessPolicySetting(SETTINGS_RA_DISABLE_REMOTE_ACCESS);
+        snprintf(response, RESPONSE_PACKET_SIZE, "system remote access disabled.");
 
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, 
