@@ -1,4 +1,4 @@
-WEBCAM = WebCam/Recorder/Recorder.c
+WEBCAM = WebCam/Recorder/Recorder.c WebCam/Stream/Stream.c WebCam/Stream/StreamController.c
 MOTION = MotionSensor/motionSensor.c MotionSensor/motionSensorController.c
 UTILITIES = Utilities/utilities.c Timer/timer.c
 PASSWORD = PasswordInput/passwordInput.c
@@ -15,9 +15,9 @@ CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
 
 all:
 	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
-	sudo mkdir -p $(PUBDIR)/Server-copy/
-	sudo cp -R Server/* $(PUBDIR)/Server-copy/
-	cd $(PUBDIR)/Server-copy/ && sudo npm install
+	sudo mkdir -p $(OUTDIR)/Server-copy/
+	sudo cp -R Server/* $(OUTDIR)/Server-copy/
+	cd $(OUTDIR)/Server-copy/ && sudo npm install
 
 wsl:
 	gcc $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  ../build/$(OUTFILE) -lpthread
@@ -27,3 +27,4 @@ src:
 
 clean:
 	rm -f *~ *.o $(OUTDIR)/$(OUTFILE)
+	rm -f *~ *.o $(OUTDIR)/Server-Copy
