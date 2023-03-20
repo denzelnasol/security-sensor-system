@@ -64,6 +64,7 @@ typedef enum {
 static bool isLoggedIn = false;
 static int exitCode = EXIT_CODE_STANDARD;
 
+static void getInput(char *buffer, size_t size);
 static void sigintHandler(int sig_num);
 static void askServer(char *command);
 static void login(void);
@@ -80,6 +81,20 @@ static void resetDangerLevel(void);
 static Signal execute(char *command);
 static void prompt(void);
 static void displayWarning(void);
+
+// gets the input from stdin and removes the newline character
+static void getInput(char *buffer, size_t size)
+{
+    char ignore[256];
+    fgets(buffer, size, stdin);
+    int idx = strcspn(buffer, "\n");
+    char ch = buffer[idx];
+    while (ch != '\n') {
+        fgets(ignore, sizeof(ignore), stdin);
+        ch = ignore[strcspn(ignore, "\n")];
+    }
+    buffer[idx] = 0;
+}
 
 // the user cannot 'ctrl+c' to terminate the program.
 // source: https://www.geeksforgeeks.org/write-a-c-program-that-doesnt-terminate-when-ctrlc-is-pressed/
@@ -122,7 +137,7 @@ static void login()
     tcsetattr(fileno(stdin), 0, &term);
 
     char password[PASSWORD_LENGTH];
-    fgets(password, sizeof(password), stdin);
+    getInput(password, sizeof(password));
 
     term.c_lflag |= ECHO;
     tcsetattr(fileno(stdin), 0, &term);
@@ -144,7 +159,7 @@ static void login()
     // extra MFA steps
     // prmpt user for mfa code
     char mfaPassword[MFA_BUFFER_SIZE];
-    fgets(mfaPassword, sizeof(mfaPassword), stdin);
+    getInput(mfaPassword, sizeof(mfaPassword));
 
     // send to the server
     ClientNet_send(mfaPassword, strlen(mfaPassword));
@@ -333,10 +348,10 @@ static Signal execute(char *command)
 static void prompt()
 {
     if (isLoggedIn) {
-        printf(ASCII_CYAN "admin@thebbg> " ASCII_RESET);
+        printf(ASCII_CYAN "admin@thebbg" ASCII_RESET ": " ASCII_CYAN "$ " ASCII_RESET);
         return;
     }
-    printf(ASCII_CYAN "guest@thebbg> " ASCII_RESET);
+    printf(ASCII_CYAN "guest@thebbg" ASCII_RESET ": " ASCII_CYAN "$ " ASCII_RESET);
 }
 static void displayWarning()
 {
@@ -358,7 +373,7 @@ int main(int argc, char **argv)
     Signal signal = SIGNAL_NONE;
     while(signal != SIGNAL_STOP) {
         prompt();
-        fgets(command, sizeof(command), stdin);
+        getInput(command, sizeof(command));
         signal = execute(command);
     }
 

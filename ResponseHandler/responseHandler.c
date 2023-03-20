@@ -12,6 +12,7 @@
 #include "../Settings/settings.h"
 #include "../EventLogger/logger.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
+#include "../MotionSensor/motionSensor.h"
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -158,7 +159,7 @@ static void toggle(char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, "logger now is %s\n", isOn ? "on": "off");
 
     } else if (strncmp(nextArg, DEVICE_MOTION_SENSOR, sizeof(DEVICE_MOTION_SENSOR)) == 0) {
-        // motionSensorController.toggle();
+        isOn = MotionSensor_toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "motion sensor now is %s\n", isOn ? "on": "off");
 
     } else {

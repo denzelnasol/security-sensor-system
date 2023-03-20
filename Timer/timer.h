@@ -20,5 +20,6 @@ void Timer_start(long milliseconds, Timer *timer);
 // Returns true if the timer has expired, false otherwise
 bool Timer_isExpired(const Timer *timer);
 
+long long Timer_timestampInMs(void);
 
 #endif
