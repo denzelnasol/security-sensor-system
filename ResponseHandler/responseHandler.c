@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -83,7 +84,10 @@ static bool parseNumber(const char *number, int *result, char *response)
     *result = (int)num;
     return true;
 }
-
+static const char *parseClientRequest(const char *request, int sizeOfCommand)
+{
+    return request + sizeOfCommand;
+}
 
 static void getDangerLevel(char *response)
 {
@@ -95,41 +99,6 @@ static void getNumTriggers(char *response)
     int numTriggers = 0;
     // motionSensorController.getNumTriggers();
     snprintf(response, RESPONSE_PACKET_SIZE, "# of triggers recorded: %d\n", numTriggers);
-}
-
-static void loginMFA()
-{
-    #define MFA_PROMPT "Enter MFA code displayed on LEDs: "
-    ServerNet_send(MFA_PROMPT, sizeof(MFA_PROMPT));
-
-    char password[RELAY_PACKET_SIZE];
-    ServerNet_receive(password);
-
-    if (!Mfa_isValid(password, strlen(password))) {
-        ServerNet_send(STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD));
-    } else {
-        ServerNet_send(STATUS_CODE_OK, sizeof(STATUS_CODE_OK));    
-    }
-}
-static void login(char *response)
-{
-    #define PASSWORD_PROMPT "Enter password for user admin: "
-    ServerNet_send(PASSWORD_PROMPT, sizeof(PASSWORD_PROMPT));
-
-    char password[RELAY_PACKET_SIZE];
-    ServerNet_receive(password);
-    password[strcspn(password, "\n")] = 0;
-
-    if (!Settings_passwordIsValid(password)) {
-        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
-        return;
-    }
-    
-    if (Settings_getRemoteAccessPolicySetting() == SETTINGS_RA_ENABLE_MFA) {
-        loginMFA();
-    } else {
-        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
-    }
 }
 
 static void toggle(char *response)
@@ -325,19 +294,53 @@ static void configureRemoteAccess(char *response)
     }
 }
 
-static Signal execute(char *command, char *response)
+static void ping(char *response)
 {
-    // getting the first part of the command
-    char *cmd = strtok(command, WHITESPACE);
-
-    // check if the commands are recognized by the client
-    if (cmd == NULL) {
-        return SIGNAL_NONE;
+    if (Settings_getRemoteAccessPolicySetting() == SETTINGS_RA_DISABLE_REMOTE_ACCESS) {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
+    } else {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     }
-    if (strncmp(cmd, COMMAND_LOGIN, sizeof(COMMAND_LOGIN)) == 0) {
-        login(response);
+}
+static void loginMFA(const char *command, char *response)
+{
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_MFA));
+    if (!Mfa_isValid(password, strlen(password))) {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
+    } else {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
+    }
+}
+static void login(const char *command, char *response)
+{
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_LOGIN));
+    if (!Settings_passwordIsValid(password)) {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
+        return;
+    }
+    
+    if (Settings_getRemoteAccessPolicySetting() == SETTINGS_RA_ENABLE_MFA) {
+        snprintf(response, RESPONSE_PACKET_SIZE, "Enter MFA code displayed on LEDs: ");
+    } else {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
+    }
+}
 
-    } else if (strncmp(cmd, COMMAND_STOP, sizeof(COMMAND_STOP)) == 0) {
+static void executeClientRequest(const char *command, char *cmd, char *response)
+{
+    if (strncmp(cmd, CLIENT_REQ_PING, sizeof(CLIENT_REQ_PING)) == 0) {
+        ping(response);
+    } else if (strncmp(cmd, CLIENT_REQ_LOGIN, sizeof(CLIENT_REQ_LOGIN)) == 0) {
+        login(command, response);
+    } else if (strncmp(cmd, CLIENT_REQ_MFA, sizeof(CLIENT_REQ_MFA)) == 0) {
+        loginMFA(command, response);
+    } else {
+        assert(false);
+    }
+}
+static Signal executeCommand(char *cmd, char *response)
+{
+    if (strncmp(cmd, COMMAND_STOP, sizeof(COMMAND_STOP)) == 0) {
         snprintf(response, RESPONSE_PACKET_SIZE, "stopped.\n");
         return SIGNAL_STOP;
 
@@ -366,6 +369,24 @@ static Signal execute(char *command, char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, "Unrecognized command '%s'\n", cmd);
     }
     return SIGNAL_NONE;
+}
+static Signal execute(char *command, char *response)
+{
+    // getting the first part of the command
+    char buffer[RELAY_PACKET_SIZE];
+    snprintf(buffer, sizeof(buffer), "%s", command);
+    char *cmd = strtok(command, WHITESPACE);
+
+    // check if the commands are recognized by the client
+    if (cmd == NULL) {
+        return SIGNAL_NONE;
+    }
+
+    if (cmd[0] == ':') {
+        executeClientRequest(buffer, cmd, response);
+        return SIGNAL_NONE;
+    }
+    return executeCommand(cmd, response);
 }
 
 

@@ -12,17 +12,12 @@
 #include "../Utilities/utilities.h"
 #include "../Timer/timer.h"
 
-#define FREQ_WEIGHT                 200
-#define LTTS_WEIGHT                 0.8
-
-#define HISTORY_WEIGHT              0.8
-
-#define DANGER_THRESHOLD_DEFAULT    0.75
+// the sleep should be about 1s because the motion sensor is debounced by the hardware for 2s
+// setting it to 1s will always catch detections
 #define SLEEP_MS                    1000
 
 static long long timeSinceLastDetectedInMs = 0;
 static History detectionHistory;
-static double avgTriggerFreq = 0;
 
 static void *mainloop(void* arg);
 static pthread_t s_thread;
@@ -77,14 +72,13 @@ static double getDangerThreshold()
     return ((double)thresholdPercent) / 100;
 }
 
-// piecewise linear function for the frequency curve
+// piecewise linear heuristic for the frequency curve
 static double PLfreq(double x)
 {
-    // the endpoints
+    // maximum detection frequency is 0.5 detections/sec due to hardware debouncing
     #define PLFREQ_PARAM_X1      0.5
     #define PLFREQ_PARAM_Y1      1
 
-    // the intersection point
     // increase by 10% after 1 detection in 30s period
     #define PLFREQ_PARAM_PX0     0.033
     #define PLFREQ_PARAM_PY0     0.1
@@ -97,9 +91,9 @@ static double PLfreq(double x)
 }
 static double PLltts(double x)
 {
-    // drop by 5% in 5 min
+    // drop by 10% in 5 min
     #define PLLLTS_PARAM_X1      300000
-    #define PLLLTS_PARAM_Y1      0.05
+    #define PLLLTS_PARAM_Y1      0.1
 
     if (x < PLLLTS_PARAM_X1) {
         return x * PLLLTS_PARAM_Y1 / PLLLTS_PARAM_X1;
@@ -108,20 +102,34 @@ static double PLltts(double x)
 }
 static double computeFrequencyContribution()
 {
+    // window size of 5 is 5 samples which is ~= 10s
+    #define SPIKE_FREQUENCY_WINDOW  5
+    #define SMOOTH_FREQ_WEIGHT      0.1
+    #define SPIKE_FREQ_WEIGHT       0.9
     double freq = Buffer_frequency(&detectionHistory);
-    return PLfreq(freq);
+    double spikeFreq = Buffer_frequencyWindow(&detectionHistory, SPIKE_FREQUENCY_WINDOW);
+    return SMOOTH_FREQ_WEIGHT * PLfreq(freq) + SPIKE_FREQ_WEIGHT * PLfreq(spikeFreq);
 }
 static double computeLTTSContribution()
 {
     return PLltts(timeSinceLastDetectedInMs);
 }
-
+static double computeBounded(double x)
+{
+    if (x <= 0) {
+        return 0;
+    }
+    if (x >= 1) {
+        return 1;
+    }
+    return x;
+}
 static double computeNewDangerLevel(double dLevel)
 {
     double freqContribution = computeFrequencyContribution();
     double lttsContribution = computeLTTSContribution();
     double newDLevel = dLevel + freqContribution - lttsContribution;
-    return newDLevel > 1 ? 1 : newDLevel;
+    return computeBounded(newDLevel);
 }
 
 static void *mainloop(void *args)

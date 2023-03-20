@@ -125,7 +125,7 @@ void Mfa_stop(void)
     sendExitSignal();
     pthread_join(s_thread, NULL);
 }
-bool Mfa_isValid(char *codeSequence, size_t size)
+bool Mfa_isValid(const char *codeSequence, size_t size)
 {
     char code[MFA_PASSWORD_LIMIT];
     getCurrentCode(code);

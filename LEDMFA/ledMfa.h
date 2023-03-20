@@ -14,6 +14,6 @@ void Mfa_start(void);
 void Mfa_stop(void);
 
 // the code sequence is a list of 0s and 1s
-bool Mfa_isValid(char *codeSequence, size_t size);
+bool Mfa_isValid(const char *codeSequence, size_t size);
 
 #endif

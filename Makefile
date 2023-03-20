@@ -35,9 +35,8 @@ wsl:
 	# gcc $(CFLAGS) $(SERVER) $(SERVER_DEPENDENCIES) -o  ../build/server
 	# gcc $(CFLAGS) $(MENU) $(DEPENDENCIES) -o  ../build/menu
 
-	# gcc $(CFLAGS) -pthread $(SERVER) $(SERVER_SRC) -o  ../build/server -lpthread
-	# gcc $(CFLAGS) -pthread $(CLIENT) $(CLIENT_SRC) -o  ../build/client -lpthread
-	gcc $(CFLAGS) curse.c -o ../build/main
+	gcc $(CFLAGS) -pthread $(SERVER) $(SERVER_SRC) -o  ../build/server -lpthread
+	gcc $(CFLAGS) -pthread $(CLIENT) $(CLIENT_SRC) -o  ../build/client -lpthread
 
 
 clean:

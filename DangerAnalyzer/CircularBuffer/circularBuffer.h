@@ -27,5 +27,8 @@ void Buffer_make(History *buffer);
 void Buffer_add(History *buffer, int numDetections);
 double Buffer_frequency(const History *buffer);
 
+// precondition: windowSize != 0 and windowSize < Buffer_size
+double Buffer_frequencyWindow(const History *buffer, int windowSize);
+
 
 #endif

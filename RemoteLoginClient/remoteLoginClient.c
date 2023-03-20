@@ -26,6 +26,7 @@
 
 #define PASSWORD_LENGTH                         32
 #define MFA_BUFFER_SIZE                         4
+#define REQ_TIMEOUT_MS                          1000
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -81,6 +82,18 @@ static void resetDangerLevel(void);
 static Signal execute(char *command);
 static void prompt(void);
 static void displayWarning(void);
+static void recvFromServ(char *message);
+static void sendPing(void);
+
+// receive message from the server. exit on timeout after 1s
+static void recvFromServ(char *message)
+{
+    if (!ClientNet_receive(message)) {
+        ClientNet_cleanup();
+        printf("Connection reset on bbg. Request timed out\n");
+        exit(isLoggedIn ? EXIT_CODE_HACCESS : EXIT_CODE_STANDARD);
+    }
+}
 
 // gets the input from stdin and removes the newline character
 static void getInput(char *buffer, size_t size)
@@ -96,7 +109,6 @@ static void getInput(char *buffer, size_t size)
     buffer[idx] = 0;
 }
 
-// the user cannot 'ctrl+c' to terminate the program.
 // source: https://www.geeksforgeeks.org/write-a-c-program-that-doesnt-terminate-when-ctrlc-is-pressed/
 static void sigintHandler(int sig_num)
 {
@@ -111,7 +123,7 @@ static void askServer(char *command)
     ClientNet_send(command, strlen(command));
     
     char response[RESPONSE_PACKET_SIZE];
-    ClientNet_receive(response);
+    recvFromServ(response);
 
     printf("%s\n", response);
 }
@@ -122,14 +134,10 @@ static void login()
         printf("Already logged in.\n");
         return;
     }
-    char response[RESPONSE_PACKET_SIZE];
-
-    ClientNet_send(COMMAND_LOGIN, sizeof(COMMAND_LOGIN));
-    ClientNet_receive(response);
-
-    printf("%s", response);
+    printf("Enter password for user admin: ");
 
     // prmpt user for password
+    // https://stackoverflow.com/questions/59922972/how-to-stop-echo-in-terminal-using-c
     struct termios term;
     tcgetattr(fileno(stdin), &term);
 
@@ -143,8 +151,11 @@ static void login()
     tcsetattr(fileno(stdin), 0, &term);
 
     // send to the server
-    ClientNet_send(password, strlen(password));
-    ClientNet_receive(response);
+    char response[RESPONSE_PACKET_SIZE];
+    char command[RELAY_PACKET_SIZE];
+    snprintf(command, sizeof(command), CLIENT_REQ_LOGIN " %s", password);
+    ClientNet_send(command, strlen(command));
+    recvFromServ(response);
 
     if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
@@ -155,15 +166,18 @@ static void login()
         return;
     }
     
-    printf("%s", response);
     // extra MFA steps
+    printf("%s", response);
+    printf("4-digits (no spaces!)\n");
+
     // prmpt user for mfa code
     char mfaPassword[MFA_BUFFER_SIZE];
     getInput(mfaPassword, sizeof(mfaPassword));
 
     // send to the server
-    ClientNet_send(mfaPassword, strlen(mfaPassword));
-    ClientNet_receive(response);
+    snprintf(command, sizeof(command), CLIENT_REQ_MFA " %s", mfaPassword);
+    ClientNet_send(command, strlen(command));
+    recvFromServ(response);
 
     if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
@@ -237,7 +251,7 @@ static void stop()
     ClientNet_send(COMMAND_STOP, sizeof(COMMAND_STOP));
     
     char response[RESPONSE_PACKET_SIZE];
-    ClientNet_receive(response);
+    recvFromServ(response);
 
     printf("%s\n", response);
 
@@ -248,7 +262,7 @@ static void resetDangerThreshold()
     ClientNet_send(COMMAND_RESET_DANGER_THRESHOLD, sizeof(COMMAND_RESET_DANGER_THRESHOLD));
     
     char response[RESPONSE_PACKET_SIZE];
-    ClientNet_receive(response);
+    recvFromServ(response);
 
     printf("%s\n", response);
 }
@@ -257,7 +271,7 @@ static void resetDangerLevel()
     ClientNet_send(COMMAND_RESET_DANGER_LEVEL, sizeof(COMMAND_RESET_DANGER_LEVEL));
     
     char response[RESPONSE_PACKET_SIZE];
-    ClientNet_receive(response);
+    recvFromServ(response);
 
     printf("%s\n", response);
 }
@@ -361,10 +375,25 @@ static void displayWarning()
     );
 }
 
+static void sendPing(void)
+{
+    ClientNet_send(CLIENT_REQ_PING, sizeof(CLIENT_REQ_PING));
+    char response[RESPONSE_PACKET_SIZE];
+    recvFromServ(response);
+    if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        ClientNet_cleanup();
+        printf("Connection refused by the server.\n");
+        exit(EXIT_CODE_STANDARD);
+    }
+}
+
 int main(int argc, char **argv)
 {
-    // signal(SIGINT, sigintHandler);
+    signal(SIGINT, sigintHandler);
     ClientNet_init();
+
+    // check if the server wants to ping
+    sendPing();
 
     displayWarning();
 

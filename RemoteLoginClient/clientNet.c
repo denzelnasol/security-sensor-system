@@ -6,10 +6,13 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "clientNet.h"
 
 #include "../Networking/networking.h"
+
+#define TIMEOUT_S   1
 
 
 // ------------------------- PRIVATE ------------------------- //
@@ -29,11 +32,21 @@ void ClientNet_init(void) {
         perror("socket failed");
         exit(1);
     }
+
+    // https://stackoverflow.com/questions/13547721/udp-socket-set-timeout
+    struct timeval tv;
+    tv.tv_sec = TIMEOUT_S;
+    tv.tv_usec = 0;
+    if (setsockopt(socketDescriptor, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        perror("setsockopt");
+        close(socketDescriptor);
+        exit(1);
+    }
 }
 
 // will add a 0 character at the end of message
 // the buffer must have a size of RESPONSE_PACKET_SIZE
-void ClientNet_receive(char *message) {
+bool ClientNet_receive(char *message) {
     struct sockaddr_in ignore;
     unsigned int sin_len = sizeof(ignore);
     int bytesRx = recvfrom(
@@ -44,7 +57,11 @@ void ClientNet_receive(char *message) {
         (struct sockaddr *)&ignore,
         &sin_len
     );
+    if (bytesRx < 0) {
+        return false;
+    }
     message[bytesRx] = 0;
+    return true;
 }
 
 

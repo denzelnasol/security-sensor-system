@@ -13,5 +13,8 @@
 #define STATUS_CODE_OK          "ok"
 #define STATUS_CODE_BAD         "bad"
 
+#define CLIENT_REQ_PING         ":ping"
+#define CLIENT_REQ_LOGIN        ":login"
+#define CLIENT_REQ_MFA          ":mfa"
 
 #endif
