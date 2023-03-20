@@ -1,6 +1,6 @@
 #include "circularBuffer.h"
 
-#include "../Timer/timer.h"
+#include "../../Timer/timer.h"
 
 #include <stdbool.h>
 #include <stdio.h>
