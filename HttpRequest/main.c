@@ -4,19 +4,19 @@
 
 size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
 {
-
+	return size;
 }
 
 int main(int argc, char **argv)
 {
     curl_global_init(CURL_GLOBAL_ALL);
 
-    CURL *curl;
+    CURL *handle;
     CURLcode res;
     
-    curl = curl_easy_init();
+    handle = curl_easy_init();
 
-    if (curl == NULL) {
+    if (handle == NULL) {
         printf("is null\n");
         return -1;
     }
@@ -26,12 +26,12 @@ int main(int argc, char **argv)
     curl_easy_setopt(handle, CURLOPT_POSTFIELDS, data);
     curl_easy_setopt(handle, CURLOPT_URL, "http://localhost:8080/level");
 
-    res = curl_easy_perform(curl);
+    res = curl_easy_perform(handle);
     if(res != CURLE_OK)
       fprintf(stderr, "curl_easy_perform() failed: %s\n",
               curl_easy_strerror(res));
  
-    curl_easy_cleanup(curl);
+    curl_easy_cleanup(handle);
 
     return 0;
 }
