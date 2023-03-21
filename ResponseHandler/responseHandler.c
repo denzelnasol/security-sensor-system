@@ -14,6 +14,7 @@
 #include "../EventLogger/logger.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../MotionSensor/motionSensor.h"
+#include "../PasswordManager/passwordManager.h"
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -62,6 +63,9 @@ static void configureRemoteAccess(char *response);
 static void ping(char *response);
 static void loginMFA(const char *command, char *response);
 static void login(const char *command, char *response);
+static void verifyIdentity(const char *command, char *response);
+static void setPassword(const char *command, char *response);
+static void setPattern(const char *command, char *response);
 static void executeClientRequest(const char *command, char *cmd, char *response);
 
 static Signal executeCommand(char *cmd, char *response);
@@ -319,7 +323,7 @@ static void loginMFA(const char *command, char *response)
 static void login(const char *command, char *response)
 {
     const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_LOGIN));
-    if (!Settings_passwordIsValid(password)) {
+    if (!PasswordManager_isLoginPasswordCorrect(password)) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
         return;
     }
@@ -330,6 +334,32 @@ static void login(const char *command, char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     }
 }
+static void verifyIdentity(const char *command, char *response)
+{
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_AUTH));
+    if (PasswordManager_isLoginPasswordCorrect(password)) {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
+    } else {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
+    }
+}
+static void setPassword(const char *command, char *response)
+{
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_SETPASS));
+    PasswordManager_changeLoginPassword(password);
+    snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
+}
+static void setPattern(const char *command, char *response)
+{
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_JSETPASS));
+    bool isOk = PasswordManager_changeMenuSystemPassword(password);
+    if (isOk) {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
+    } else {
+        snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
+    }
+}
+
 
 static void executeClientRequest(const char *command, char *cmd, char *response)
 {
@@ -339,6 +369,12 @@ static void executeClientRequest(const char *command, char *cmd, char *response)
         login(command, response);
     } else if (strncmp(cmd, CLIENT_REQ_MFA, sizeof(CLIENT_REQ_MFA)) == 0) {
         loginMFA(command, response);
+    } else if (strncmp(cmd, CLIENT_REQ_AUTH, sizeof(CLIENT_REQ_AUTH)) == 0) {
+        verifyIdentity(command, response);
+    } else if (strncmp(cmd, CLIENT_REQ_SETPASS, sizeof(CLIENT_REQ_SETPASS)) == 0) {
+        setPassword(command, response);
+    } else if (strncmp(cmd, CLIENT_REQ_JSETPASS, sizeof(CLIENT_REQ_JSETPASS)) == 0) {
+        setPattern(command, response);
     } else {
         assert(false);
     }

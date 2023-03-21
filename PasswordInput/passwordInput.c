@@ -5,34 +5,53 @@
 
 #include "passwordInput.h"
 
-
+#include "../PasswordManager/passwordManager.h"
 #include "../Joystick/joystick.h"
 // #include "../Menu/MockObjects/joystick.h"
-
-#define PASSWORD_LIMIT      10
 
 // ------------------------- PRIVATE ------------------------- //
 
 typedef struct {
-    JoystickInput sequence[PASSWORD_LIMIT];
+    JoystickInput sequence[PWMGR_MSPASSWORD_LIMIT - 1];
     size_t size;
 } Sequence;
 
-static Sequence password;
 static Sequence sequence;
 
+static char inputToChar(JoystickInput input)
+{
+    switch (input) {
+        case JOYSTICK_UP:
+            return '1';
+        case JOYSTICK_RIGHT:
+            return '2';
+        case JOYSTICK_DOWN:
+            return '3';
+        case JOYSTICK_LEFT:
+            return '4';
+        default:
+            assert(false);
+    }
+    return 0;
+}
+// precondition: buffer must have size == PWMGR_MSPASSWORD_LIMIT
+static void sequenceToString(const Sequence *seq, char *buffer)
+{
+    for (int i = 0; i < seq->size; i++) {
+        buffer[i] = charToInput(seq->sequence[i]);
+    }
+    buffer[seq->size] = 0;
+}
 static bool isPasswordValid()
 {
-    bool isValid = (password.size == sequence.size);
-    for (int i = 0; i < password.size; i++) {
-        isValid = isValid && (password.sequence[i] == sequence.sequence[i]);
-    }
-    return isValid;
+    char buffer[PWMGR_MSPASSWORD_LIMIT];
+    sequenceToString(&sequence, buffer);
+    return PasswordManager_isMenuSystemPasswordCorrect(buffer);
 }
 
 static bool Sequence_isFull(const Sequence *seq)
 {
-    return seq->size == PASSWORD_LIMIT;
+    return seq->size == (PWMGR_MSPASSWORD_LIMIT - 1);
 }
 
 // precondition: seq is not full
@@ -52,12 +71,7 @@ static void Sequence_reset(Sequence *seq)
 
 void PasswordInput_init(void)
 {
-    // todo: read the password from a file
-    Sequence_add(&password, JOYSTICK_UP);
-    Sequence_add(&password, JOYSTICK_RIGHT);
-    Sequence_add(&password, JOYSTICK_DOWN);
-    Sequence_add(&password, JOYSTICK_LEFT);
-    Sequence_add(&password, JOYSTICK_CENTER);
+    // do nothing
 }
 void PasswordInput_cleanup(void)
 {
@@ -76,13 +90,13 @@ PInputState PasswordInput_sendNext(JoystickInput input)
         return P_INPUT_TOO_LONG;
     }
 
-    Sequence_add(&sequence, input);
-
     if (input == JOYSTICK_CENTER) {
         PInputState state = isPasswordValid() ? P_INPUT_MATCH : P_INPUT_NO_MATCH;
         Sequence_reset(&sequence);
         return state;
     }
+
+    Sequence_add(&sequence, input);
 
     return P_INPUT_CONTINUE;
 }

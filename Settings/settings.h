@@ -31,7 +31,4 @@ void Settings_setRemoteAccessPolicySetting(SettingsRAOpt setting);
 int Settings_getDangerThresholdSetting(void);
 void Settings_setDangerThresholdSetting(int newThreshold);
 
-bool Settings_passwordIsValid(const char *password);
-void Settings_changePassword(const char *newPassword, size_t size);
-
 #endif

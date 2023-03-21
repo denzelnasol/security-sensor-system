@@ -23,6 +23,7 @@
 #include "../Networking/networking.h"
 #include "../Utilities/utilities.h"
 #include "../EventLogger/logger.h"
+#include "../Share/host.h"
 
 #define PASSWORD_LENGTH                         16
 #define MFA_BUFFER_SIZE                         5
@@ -48,6 +49,8 @@
 #define COMMAND_LOGOUT                          "logout"
 #define COMMAND_HOST_ACCESS                     "haccess"
 #define COMMAND_CLEAR_LOGS                      "clearlogs"
+#define COMMAND_CHANGE_PASSWORD                 "chpassword"
+#define COMMAND_CHANGE_JOYSTICK_PATTERN         "chjpattern"
 
 #define EXIT_CODE_HACCESS                       EXIT_SUCCESS
 #define EXIT_CODE_STANDARD                      1
@@ -64,6 +67,7 @@ typedef enum {
 static bool isLoggedIn = false;
 static int exitCode = EXIT_CODE_STANDARD;
 
+static void getPassword(char *buffer, size_t size);
 static void getInput(char *buffer, size_t size);
 static void sigintHandler(int sig_num);
 static void askServer(char *command);
@@ -77,12 +81,17 @@ static void accessHost(void);
 static void stop(void);
 static void resetDangerThreshold(void);
 static void resetDangerLevel(void);
+static void changePassword(void);
+static void changeJoystickPattern(void);
 
 static Signal execute(char *command);
 static void prompt(void);
 static void displayWarning(void);
 static void recvFromServ(char *message);
 static void sendPing(void);
+
+static bool patternIsValid(char *buffer, size_t size);
+static bool mfaPatternIsValid(char *buffer, size_t size);
 
 // receive message from the server. exit on timeout after 1s
 static void recvFromServ(char *message)
@@ -106,6 +115,46 @@ static void getInput(char *buffer, size_t size)
         ch = ignore[strcspn(ignore, "\n")];
     }
     buffer[idx] = 0;
+}
+
+static void getPassword(char *buffer, size_t size)
+{
+    // prmpt user for password
+    // https://stackoverflow.com/questions/59922972/how-to-stop-echo-in-terminal-using-c
+    struct termios term;
+    tcgetattr(fileno(stdin), &term);
+
+    term.c_lflag &= ~ECHO;
+    tcsetattr(fileno(stdin), 0, &term);
+
+    getInput(password, size);
+
+    term.c_lflag |= ECHO;
+    tcsetattr(fileno(stdin), 0, &term);
+    
+    printf("\n");
+}
+
+// returns true if the joystick pattern is valid
+static bool patternIsValid(char *buffer, size_t size)
+{
+    for (int i = 0; i < size; i++) {
+        char ch = buffer[i];
+        if (ch < '1' || ch > '4') {
+            return false;
+        }
+    }
+    return true;
+}
+static bool mfaPatternIsValid(char *buffer, size_t size)
+{
+    for (int i = 0; i < size; i++) {
+        char ch = buffer[i];
+        if (ch != '1' && ch != '0') {
+            return false;
+        }
+    }
+    return true;
 }
 
 // source: https://www.geeksforgeeks.org/write-a-c-program-that-doesnt-terminate-when-ctrlc-is-pressed/
@@ -135,19 +184,8 @@ static void login()
     }
     printf("Enter password for user admin: ");
 
-    // prmpt user for password
-    // https://stackoverflow.com/questions/59922972/how-to-stop-echo-in-terminal-using-c
-    struct termios term;
-    tcgetattr(fileno(stdin), &term);
-
-    term.c_lflag &= ~ECHO;
-    tcsetattr(fileno(stdin), 0, &term);
-
     char password[PASSWORD_LENGTH];
-    getInput(password, sizeof(password));
-
-    term.c_lflag |= ECHO;
-    tcsetattr(fileno(stdin), 0, &term);
+    getPassword(password, sizeof(password));
 
     // send to the server
     char response[RESPONSE_PACKET_SIZE];
@@ -155,8 +193,6 @@ static void login()
     snprintf(command, sizeof(command), CLIENT_REQ_LOGIN " %s", password);
     ClientNet_send(command, strlen(command));
     recvFromServ(response);
-
-    printf("\n");
 
     if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
@@ -173,6 +209,10 @@ static void login()
     // prmpt user for mfa code
     char mfaPassword[MFA_BUFFER_SIZE];
     getInput(mfaPassword, sizeof(mfaPassword));
+    if (!mfaPatternIsValid(mfaPassword, sizeof(mfaPassword))) {
+        printf("Incorrect format of MFA code. Only 0s and 1s allowed.\n");
+        return;
+    }
 
     // send to the server
     snprintf(command, sizeof(command), CLIENT_REQ_MFA " %s", mfaPassword);
@@ -275,6 +315,127 @@ static void resetDangerLevel()
 
     printf("%s\n", response);
 }
+static void changePassword()
+{
+    // verify identity
+    printf("Enter current password: ");
+
+    char password[PASSWORD_LENGTH];
+    getPassword(password, sizeof(password));
+
+    char command[RELAY_PACKET_SIZE];
+    snprintf(command, sizeof(command), CLIENT_REQ_AUTH " %s", password);
+    ClientNet_send(command, strlen(command));
+
+    char response[RESPONSE_PACKET_SIZE];
+    recvFromServ(response);
+
+    if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        printf("Incorrect password.\n");
+        return;
+    }
+
+    // set new password
+    char confirmedPassword[PASSWORD_LENGTH];
+    printf("Enter new password: ");
+    getPassword(password, sizeof(password));
+
+    printf("Confirm new password: ");
+    getPassword(confirmedPassword, sizeof(confirmedPassword));
+
+    if (strncmp(password, confirmedPassword, PASSWORD_LENGTH) != 0) {
+        printf("Password does not match.\n");
+        return;
+    }
+
+    // finalize
+    snprintf(command, sizeof(command), CLIENT_REQ_SETPASS " %s", password);
+    ClientNet_send(command, strlen(command));
+    recvFromServ(response);
+
+    if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        printf("Password change rejected.\n");
+    } else if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
+        printf("Password change ok.\n");
+    }
+}
+static void changeJoystickPattern()
+{
+    // verify identity
+    printf("Enter password: ");
+
+    char password[PASSWORD_LENGTH];
+    getPassword(password, sizeof(password));
+
+    char command[RELAY_PACKET_SIZE];
+    snprintf(command, sizeof(command), CLIENT_REQ_AUTH " %s", password);
+    ClientNet_send(command, strlen(command));
+
+    char response[RESPONSE_PACKET_SIZE];
+    recvFromServ(response);
+
+    if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        printf("Incorrect password.\n");
+        return;
+    }
+
+    // mfa is mandatory for changing menu system password!
+    printf("Enter MFA code displayed on LEDs: ");
+    char mfaPassword[MFA_BUFFER_SIZE];
+    getInput(mfaPassword, sizeof(mfaPassword));
+    if (!mfaPatternIsValid(mfaPassword, sizeof(mfaPassword))) {
+        printf("Incorrect format of MFA code. Only 0s and 1s allowed.\n");
+        return;
+    }
+
+    snprintf(command, sizeof(command), CLIENT_REQ_MFA " %s", mfaPassword);
+    ClientNet_send(command, strlen(command));
+    recvFromServ(response);
+
+    if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        printf("Incorrect MFA code.\n");
+        return;
+    }
+
+    // finally change the pattern
+    printf(
+        "\nWarning: This will affect the joystick pattern required" 
+        "to login as admin on the beagle cam's menu!\n\n"
+        "Instructions:\n"
+        "**Pattern must only contain numbers 1 to 4 (no spaces)**\n"
+        "UP    = 1\n"
+        "RIGHT = 2\n"
+        "DOWN  = 3\n"
+        "LEFT  = 4\n"
+    );
+
+    // set new pattern
+    char confirmedPassword[PASSWORD_LENGTH];
+    printf("Enter current pattern: ");
+    getPassword(password, sizeof(password));
+    if (!patternIsValid(password, sizeof(password))) {
+        printf("Incorrect format of pattern.\n");
+        return;
+    }
+
+    printf("Confirm new pattern: ");
+    getPassword(confirmedPassword, sizeof(confirmedPassword));
+    if (strncmp(password, confirmedPassword, PASSWORD_LENGTH) != 0) {
+        printf("Pattern does not match.\n");
+        return;
+    }
+
+    // finalize
+    snprintf(command, sizeof(command), CLIENT_REQ_JSETPASS " %s", password);
+    ClientNet_send(command, strlen(command));
+    recvFromServ(response);
+
+    if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        printf("Pattern change rejected.\n");
+    } else if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
+        printf("Pattern change ok.\n");
+    }
+}
 
 // precondition: command cannot have a newline
 static Signal execute(char *command)
@@ -344,6 +505,12 @@ static Signal execute(char *command)
     } else if (strncmp(cmd, COMMAND_RESET_DANGER_LEVEL, sizeof(COMMAND_RESET_DANGER_LEVEL)) == 0) {
         resetDangerLevel();
 
+    } else if (strncmp(cmd, COMMAND_CHANGE_PASSWORD, sizeof(COMMAND_CHANGE_PASSWORD)) == 0) {
+        changePassword();
+
+    } else if (strncmp(cmd, COMMAND_CHANGE_JOYSTICK_PATTERN, sizeof(COMMAND_CHANGE_JOYSTICK_PATTERN)) == 0) {
+        changeJoystickPattern();
+
     } else if (strncmp(cmd, COMMAND_TOGGLE, sizeof(COMMAND_TOGGLE)) == 0) {
         askServer(buffer);
 
@@ -362,10 +529,10 @@ static Signal execute(char *command)
 static void prompt()
 {
     if (isLoggedIn) {
-        printf(ASCII_CYAN "admin@thebbg" ASCII_RESET ": " ASCII_CYAN "$ " ASCII_RESET);
+        printf(ASCII_CYAN "admin@" HOST_NAME ASCII_RESET ": " ASCII_CYAN "$ " ASCII_RESET);
         return;
     }
-    printf(ASCII_CYAN "guest@thebbg" ASCII_RESET ": " ASCII_CYAN "$ " ASCII_RESET);
+    printf(ASCII_CYAN "guest@" HOST_NAME ASCII_RESET ": " ASCII_CYAN "$ " ASCII_RESET);
 }
 static void displayWarning()
 {

@@ -16,5 +16,8 @@
 #define CLIENT_REQ_PING         ":ping"
 #define CLIENT_REQ_LOGIN        ":login"
 #define CLIENT_REQ_MFA          ":mfa"
+#define CLIENT_REQ_AUTH         ":auth"
+#define CLIENT_REQ_SETPASS      ":setp"
+#define CLIENT_REQ_JSETPASS     ":jsetp"
 
 #endif
