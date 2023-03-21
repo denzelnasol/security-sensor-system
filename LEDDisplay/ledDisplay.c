@@ -62,6 +62,7 @@
 typedef struct {
     unsigned char upper;
     unsigned char lower; 
+    int value;
 } Digit;
 
 typedef struct {
@@ -165,13 +166,13 @@ static void sendExitSignal()
 // switches quickly between the left and right digit so it appears to display both at the same time
 static void *displayLEDDigits(void *args) 
 {
-    Digit rightVal, leftVal;
+    Digit msd, lsd;
     bool isSpecial = false;
     while (!receivedExitSignal()) {
         pthread_mutex_lock(&s_digitsMutex);
         {
-            rightVal = s_ledDigits.right;
-            leftVal = s_ledDigits.left;
+            msd = s_ledDigits.msd;
+            lsd = s_ledDigits.lsd;
             isSpecial = s_ledDigits.isSpecial;
         }
         pthread_mutex_unlock(&s_digitsMutex);
@@ -193,8 +194,8 @@ static void *displayLEDDigits(void *args)
         turnLEDDisplayOnOrOff(OFF, LEFT_LED_GPIO_61_VALUE_PATH);
         turnLEDDisplayOnOrOff(OFF, RIGHT_LED_GPIO_44_VALUE_PATH);
 
-        writeI2cReg(s_i2cFileDesc, REG_UPPER, rightVal.upper);
-        writeI2cReg(s_i2cFileDesc, REG_LOWER, rightVal.lower);
+        writeI2cReg(s_i2cFileDesc, REG_UPPER, lsd.upper);
+        writeI2cReg(s_i2cFileDesc, REG_LOWER, lsd.lower);
 
         // Display right digit
         turnLEDDisplayOnOrOff(ON, RIGHT_LED_GPIO_44_VALUE_PATH);
@@ -202,12 +203,12 @@ static void *displayLEDDigits(void *args)
         Utilities_sleepForMs(SLEEP_MS);
 
         // Display left digit;
-        if (leftVal != 0) {
+        if (msd.value != 0) {
             turnLEDDisplayOnOrOff(OFF, LEFT_LED_GPIO_61_VALUE_PATH);
             turnLEDDisplayOnOrOff(OFF, RIGHT_LED_GPIO_44_VALUE_PATH);
 
-            writeI2cReg(s_i2cFileDesc, REG_UPPER, leftVal.upper);
-            writeI2cReg(s_i2cFileDesc, REG_LOWER, leftVal.lower);
+            writeI2cReg(s_i2cFileDesc, REG_UPPER, msd.upper);
+            writeI2cReg(s_i2cFileDesc, REG_LOWER, msd.lower);
 
             turnLEDDisplayOnOrOff(ON, LEFT_LED_GPIO_61_VALUE_PATH);
 
@@ -263,6 +264,8 @@ void LedDisplay_setDisplayNumber(int number, unsigned int indicatorOptions)
     msd.upper = UPPER_EIGHT_BITS[msdDigit];
     lsd.lower = LOWER_EIGHT_BITS[lsdDigit];
     msd.lower = LOWER_EIGHT_BITS[msdDigit];
+    lsd.value = lsdDigit;
+    msd.value = msdDigit;
 
     if ((indicatorOptions & S16_SET_INDICATOR) == S16_SET_INDICATOR) {
         msd.lower += INDICATOR_BIT;

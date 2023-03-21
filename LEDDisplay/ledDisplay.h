@@ -15,7 +15,7 @@ void LedDisplay_start(void);
 void LedDisplay_stop(void);
 
 // sets the display to display 'number'
-void LedDisplay_setDisplayNumber(int number);
+void LedDisplay_setDisplayNumber(int number, unsigned int indicatorOptions);
 
 // sets the display to the password symbol
 void LedDisplay_showSpecial(void);

@@ -340,7 +340,7 @@ static int getAutoLogoutTimeoutInMs()
 }
 
 
-static void *mainloop(void *) 
+static void *mainloop(void *args) 
 {
     // debugDisplay(currentState.state->currentOpt, 0);
 
@@ -362,6 +362,7 @@ static void *mainloop(void *)
             // debugDisplay(currentState.state->currentOpt, 0);
         }
     }
+    return NULL
 }
 
 // waits for a user to input a valid input through the joystick and then calls the correct handler
@@ -635,7 +636,7 @@ static void setViewToggleMotionSensor()
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
     bool isEnabled = MotionSensor_isEnabled();
-    subMenu.selectedOpt = isEnabled ? 1 : 0
+    subMenu.selectedOpt = isEnabled ? 1 : 0;
 }
 static void setViewToggleCamera()
 {
@@ -649,7 +650,7 @@ static void setViewToggleLogger()
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
     bool isEnabled = Logger_isEnabled();
-    subMenu.selectedOpt = isEnabled ? 1 : 0
+    subMenu.selectedOpt = isEnabled ? 1 : 0;
 }
 static void setViewSetDangerThreshold()
 {
