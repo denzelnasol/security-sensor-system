@@ -5,10 +5,7 @@
 
 void DangerAnalyzer_start(void);
 
-void DangerAnalyzer_setThreshold(int dangerThreshold);
-void DangerAnalyzer_resetThreshold(void);
 void DangerAnalyzer_resetDangerLevel(void);
-
 double DangerAnalyzer_getDangerLevel(void);
 long long DangerAnalyzer_getNumTriggers(void);
 

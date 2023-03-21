@@ -358,7 +358,7 @@ static void *mainloop(void *args)
             // debugDisplay(currentState.state->currentOpt, 0);
         }
     }
-    return NULL
+    return NULL;
 }
 
 // waits for a user to input a valid input through the joystick and then calls the correct handler
@@ -460,7 +460,7 @@ static void toggleLogger()
 static void setDangerThreshold()
 {
     int newDangerThresh = subMenu.currentOpt;
-    DangerAnalyzer_setThreshold(newDangerThresh);
+    Settings_setDangerThresholdSetting(newDangerThresh);
     subMenu.selectedOpt = newDangerThresh;
 }
 // for submenu options with confirm/cancel, when user selects an option, perform the action and then
@@ -468,7 +468,7 @@ static void setDangerThreshold()
 static void resetDangerThreshold()
 {
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
-        DangerAnalyzer_resetThreshold();
+        Settings_setDangerThresholdSetting(DANGER_ANALYZER_DEFAULT_THRESHOLD);
     }
     back(&currentState);
 }
