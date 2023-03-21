@@ -339,6 +339,7 @@ static int getAutoLogoutTimeoutInMs()
 static void *mainloop(void *args) 
 {
     // debugDisplay(currentState.state->currentOpt, 0);
+    LedDisplay_setDisplayNumber(currentState.state->currentOpt, S16_SET_NONE);
 
     Signal signal = SIGNAL_CONTINUE;
     while (signal != SIGNAL_EXIT) {
@@ -701,13 +702,20 @@ void Menu_stop(void)
 //--------------- FOR TESTING-----------//
 int main(int argc, char **argv)
 {
+    Joystick_init();
     PasswordInput_init();
+    LedDisplay_start();
 
+    isLoggedIn = false;
+    setGuestView(&menu);
+    setMenuState(&currentState);
     printf("starting gui...\n");
 
     mainloop(NULL);
 
+    LedDisplay_stop();
     PasswordInput_cleanup();
+    Joystick_cleanup();
     return 0;
 }
 

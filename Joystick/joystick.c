@@ -107,7 +107,7 @@ JoystickInput Joystick_getPressed(void)
             return pressed;
         }
     } else {
-        if (Timer_isExpired(&timer) && pressed == JOYSTICK_NONE) {
+        if (Timer_isExpired(&timer)) {
             inDetectState = true;
         }
     }

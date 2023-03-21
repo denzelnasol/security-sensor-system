@@ -45,8 +45,11 @@
 
 #define I2C_DEVICE_ADDRESS              0x20
 
-#define REG_LOWER                        0x14
-#define REG_UPPER                        0x15
+#define REG_LOWER                       0x14
+#define REG_UPPER                       0x15
+#define PORT_0X00                       0x00 
+#define PORT_0X01                       0x01
+#define PORT_OUT                        0x00
 
 #define SPECIAL_SYMBOL_LOWER            0x1e
 #define SPECIAL_SYMBOL_UPPER            0x78
@@ -218,13 +221,6 @@ static void *displayLEDDigits(void *args)
     return NULL;
 }
 
-void initiateLEDDisplayThread(void) 
-{
-    pthread_attr_t ledDisplayAttr;
-    pthread_attr_init(&ledDisplayAttr);
-    pthread_create(&s_ledDisplayThread, &ledDisplayAttr, displayLEDDigits, NULL);
-}
-
 // ------------------------- PUBLIC ------------------------- //
 void LedDisplay_start() 
 {
@@ -234,8 +230,13 @@ void LedDisplay_start()
 
     s_i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS1, I2C_DEVICE_ADDRESS);
 
+    writeI2cReg(s_i2cFileDesc, PORT_0X00, PORT_OUT);
+    writeI2cReg(s_i2cFileDesc, PORT_0X01, PORT_OUT);
+
     // start the thread
-    initiateLEDDisplayThread();
+    pthread_attr_t ledDisplayAttr;
+    pthread_attr_init(&ledDisplayAttr);
+    pthread_create(&s_ledDisplayThread, &ledDisplayAttr, displayLEDDigits, NULL);
 }
 
 void LedDisplay_stop() 
@@ -268,7 +269,7 @@ void LedDisplay_setDisplayNumber(int number, unsigned int indicatorOptions)
     msd.value = msdDigit;
 
     if ((indicatorOptions & S16_SET_INDICATOR) == S16_SET_INDICATOR) {
-        msd.lower += INDICATOR_BIT;
+        lsd.lower += INDICATOR_BIT;
     }
 
     pthread_mutex_lock(&s_digitsMutex);
