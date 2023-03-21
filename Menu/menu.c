@@ -196,10 +196,6 @@ static void sendExitSignal()
     }
     pthread_mutex_unlock(&s_stopMutex);
 }
-static void *mainloop(void *args)
-{
-    return NULL;
-}
 
 static void next(StateInfo *state)
 {
