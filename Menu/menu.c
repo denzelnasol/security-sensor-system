@@ -2,16 +2,20 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
-// #include <pthread.h>
+#include <pthread.h>
 
 #include "menu.h"
 
-#include "../Joystick/joystick.h"
 // #include "MockObjects/joystick.h"
+#include "../Joystick/joystick.h"
 #include "../LEDDisplay/ledDisplay.h"
 #include "../PasswordInput/passwordInput.h"
 #include "../Timer/timer.h"
 #include "../Utilities/utilities.h"
+#include "../MotionSensor/motionSensor.h"
+#include "../Settings/settings.h"
+#include "../EventLogger/logger.h"
+#include "../DangerAnalyzer/dangerAnalyzer.h"
 
 #define SLEEP_FREQUENCY_MS                      10
 
@@ -83,22 +87,6 @@ typedef enum {
     OPT_CONFIGURE_SECURITY_POLICY,
 } Option;
 
-// auto logout policies
-typedef enum {
-    SOPT_AL_AFTER_30_SEC,
-    SOPT_AL_AFTER_1_MIN,
-    SOPT_AL_AFTER_2_MIN,
-    SOPT_AL_SENTINEL_MAX,
-} SOptALPolicy;
-
-// remote access policies
-typedef enum {
-    SOPT_RA_DISABLE_MFA,
-    SOPT_RA_ENABLE_MFA,
-    SOPT_RA_DISABLE_REMOTE_ACCESS,
-    SOPT_RA_SENTINEL_MAX,
-} SOptRAPolicy;
-
 typedef enum {
     ACTION_TOGGLE_ON_OR_CONFIRM,
     ACTION_TOGGLE_OFF_OR_CANCEL,
@@ -131,32 +119,38 @@ typedef struct {
     StateType type;
 } State;
 
-static long inactivityTimeoutMs = AUTO_LOGOUT_AFTER_30_SEC_MS;
 static Timer inactivityTimer;
 
 static StateInfo menu;
 static StateInfo subMenu;
-
 static State currentState;
 
 static bool isLoggedIn = false;
+
+static void *mainloop(void *args);
+static bool s_stop = false;
+static pthread_t s_thread;
+static pthread_mutex_t s_stopMutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 static void next(StateInfo *state);
 static void prev(StateInfo *state);
 static void back(State *state);
+
 static void setMenuState(State *state);
 static void setSubMenuState(State *state);
 static void setAdminView(StateInfo *menu);
 static void setGuestView(StateInfo *menu);
+
 static void logout(void);
 static Signal login(void);
 static Signal logoutOrLogin(void);
+
 static Signal processUserInput(void);
 static Signal handleUserInput(JoystickInput input);
 static Signal handleCenter(void);
 static void handleLeft(void);
-static void startGui(void);
+
 static void toggleMotionSensor(void);
 static void toggleCamera(void);
 static void toggleLogger(void);
@@ -165,8 +159,10 @@ static void resetDangerThreshold(void);
 static void resetDangerLevel(void);
 static void configureAutoLogout(void);
 static void configureSecurityPolicy(void);
+
 static void doFromSubMenu(void);
 static Signal doFromMenu(void);
+
 static void setViewCheckDangerLevel(void);
 static void setViewCheckNumTriggers(void);
 static void setViewToggleMotionSensor(void);
@@ -178,6 +174,32 @@ static void setViewResetDangerLevel(void);
 static void setViewConfigureAutoLogout(void);
 static void setViewConfigureSecurityPolicy(void); 
 
+static bool receivedExitSignal(void);
+static void sendExitSignal(void);
+static int getAutoLogoutTimeoutInMs(void);
+
+static bool receivedExitSignal() 
+{
+    bool signalReceived = false;
+    pthread_mutex_lock(&s_stopMutex);
+    {
+        signalReceived = s_stop;
+    }
+    pthread_mutex_unlock(&s_stopMutex);
+    return signalReceived;
+}
+static void sendExitSignal() 
+{
+    pthread_mutex_lock(&s_stopMutex);
+    {
+        s_stop = true;
+    }
+    pthread_mutex_unlock(&s_stopMutex);
+}
+static void *mainloop(void *args)
+{
+    return NULL;
+}
 
 static void next(StateInfo *state)
 {
@@ -225,12 +247,6 @@ static void setGuestView(StateInfo *view)
     view->selectedOpt = MATCH_NONE_SELECTION_INDICATOR_VALUE;
 }
 
-static bool isExitSignalReceived()
-{
-    // todo: set the exit signal
-    return false;
-}
-
 static void logout()
 {
     setGuestView(&menu);
@@ -242,7 +258,7 @@ static Signal login()
     printf("loggin in\n");
     LedDisplay_showSpecial();
     
-    Timer_start(inactivityTimeoutMs, &inactivityTimer);
+    Timer_start(getAutoLogoutTimeoutInMs(), &inactivityTimer);
 
     PInputState passwordStatus = P_INPUT_CONTINUE;
     while (passwordStatus == P_INPUT_CONTINUE) {
@@ -251,13 +267,13 @@ static Signal login()
             back(&currentState);
             return SIGNAL_CONTINUE;
         }
-        if (isExitSignalReceived()) {
+        if (receivedExitSignal()) {
             return SIGNAL_EXIT;
         }
         JoystickInput input = Joystick_getPressed();
         if (input != JOYSTICK_NONE) {
             // reset the timer
-            Timer_start(inactivityTimeoutMs, &inactivityTimer);
+            Timer_start(getAutoLogoutTimeoutInMs(), &inactivityTimer);
         }
         passwordStatus = PasswordInput_sendNext(input);
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
@@ -308,8 +324,23 @@ static void debugDisplay(int opt, int setIndicator)
             currentState.state->selectedOpt);
 }
 
+static int getAutoLogoutTimeoutInMs()
+{
+    switch (Settings_getAutoLogoutSetting()) {
+        case SETTINGS_AL_AFTER_30_SEC:
+            return AUTO_LOGOUT_AFTER_30_SEC_MS;
+        case SETTINGS_AL_AFTER_1_MIN:
+            return AUTO_LOGOUT_AFTER_1_MIN_MS;        
+        case SETTINGS_AL_AFTER_2_MIN:
+            return AUTO_LOGOUT_AFTER_2_MIN_MS;
+        default:
+            assert(false);
+    }
+    return 0;
+}
 
-static void startGui() 
+
+static void *mainloop(void *) 
 {
     // debugDisplay(currentState.state->currentOpt, 0);
 
@@ -340,7 +371,7 @@ static Signal processUserInput()
 {
     // keep polling the joystick 
     // if timeout and logged in then execute logout 
-    Timer_start(inactivityTimeoutMs, &inactivityTimer);
+    Timer_start(getAutoLogoutTimeoutInMs(), &inactivityTimer);
 
     JoystickInput input = JOYSTICK_NONE;
     while (input == JOYSTICK_NONE) {
@@ -348,7 +379,7 @@ static Signal processUserInput()
             logout();
             return SIGNAL_CONTINUE;
         }
-        if (isExitSignalReceived()) {
+        if (receivedExitSignal()) {
             return SIGNAL_EXIT;
         }
         input = Joystick_getPressed();
@@ -404,16 +435,15 @@ static Signal handleCenter()
 // turns the motion sensor on or off
 static void toggleMotionSensor()
 {
-    // MotionSensorToggle val = MOTION_SENSOR_OFF;
-    if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
-        // val = MOTION_SENSOR_ON;
+    if (subMenu.currentOpt != subMenu.selectedOpt) {
+        MotionSensor_toggle();
     }
-    // motionSensorController.toggle(val);
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 // turns the camera on or off
 static void toggleCamera()
 {
+    // todo
     // CamToggle val = CAM_OFF;
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
         // val = CAM_ON;
@@ -424,18 +454,16 @@ static void toggleCamera()
 // turns the logger on or off
 static void toggleLogger()
 {
-    // LoggerToggle val = LOGGER_OFF;
-    if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
-        // val = LOGGER_ON;
+    if (subMenu.currentOpt != subMenu.selectedOpt) {
+        Logger_toggle();
     }
-    // logger.toggle(val);
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 
 static void setDangerThreshold()
 {
     int newDangerThresh = subMenu.currentOpt;
-    // analyzer.setDangerThreshold(newDangerThresh);
+    DangerAnalyzer_setThreshold(newDangerThresh);
     subMenu.selectedOpt = newDangerThresh;
 }
 // for submenu options with confirm/cancel, when user selects an option, perform the action and then
@@ -443,58 +471,55 @@ static void setDangerThreshold()
 static void resetDangerThreshold()
 {
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
-        // analyzer.resetDangerThreshold();
+        DangerAnalyzer_resetThreshold();
     }
     back(&currentState);
 }
 static void resetDangerLevel()
 {
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
-        // analyzer.resetDangerLevel();
+        DangerAnalyzer_resetDangerLevel();
     }
     back(&currentState);
 }
 
 static void configureAutoLogout()
 {
-    // SettingsAutoLogoutOption opt = SETTINGS_AUTO_LOGOUT_AFTER_30_SEC
-    // switch (subMenu.currentOpt) {
-    //     case AUTO_LOGOUT_AFTER_30_SEC:
-    //         inactivityTimeoutMs = AUTO_LOGOUT_AFTER_30_SEC_MS;
-    //         break;
-    //     case AUTO_LOGOUT_AFTER_1_MIN:
-    //         opt = SETTINGS_AUTO_LOGOUT_AFTER_1_MIN;
-    //         inactivityTimeoutMs = AUTO_LOGOUT_AFTER_1_MIN_MS;
-    //         break;
-    //     case AUTO_LOGOUT_AFTER_2_MIN:
-    //         opt = SETTINGS_AUTO_LOGOUT_AFTER_2_MIN;
-    //         inactivityTimeoutMs = AUTO_LOGOUT_AFTER_2_MIN_MS;
-    //         break;
-    //     default:
-    //         assert(false);
-    // }
-    //// write preferences to file
-    // settingsModule.save(SETTINGS_AUTO_LOGOUT, opt);
+    SettingsALOpt opt = 0;
+    switch ((SettingsALOpt)subMenu.currentOpt) {
+        case SETTINGS_AL_AFTER_30_SEC:
+            opt = SETTINGS_AL_AFTER_30_SEC;
+            break;
+        case SETTINGS_AL_AFTER_1_MIN:
+            opt = SETTINGS_AL_AFTER_1_MIN;
+            break;
+        case SETTINGS_AL_AFTER_2_MIN:
+            opt = SETTINGS_AL_AFTER_2_MIN;
+            break;
+        default:
+            assert(false);
+    }
+    Settings_setAutoLogoutSetting(opt);
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 
 static void configureSecurityPolicy()
 {
-    // SettingsSecurityPolicy opt = SETTINGS_SECURITY_POLICY_DISABLE_REMOTE_AUTH;
-    // switch (subMenu.currentOpt) {
-    //     case SECURITY_POLICY_DISABLE_REMOTE_AUTH:
-    //         break;
-    //     case SECURITY_POLICY_ENABLE_REMOTE_AUTH:
-    //         opt = SETTINGS_SECURITY_POLICY_ENABLE_REMOTE_AUTH;
-    //         break;
-    //     case SECURITY_POLICY_DISABLE_REMOTE_ACCESS:
-    //         opt = SETTINGS_SECURITY_POLICY_DISABLE_REMOTE_ACCESS;
-    //         break;
-    //     default:
-    //         assert(false);
-    // }
-    //// write preferences to file
-    // settingsModule.save(SETTINGS_SECURITY_POLICY, opt);
+    SettingsRAOpt opt = 0;
+    switch ((SettingsRAOpt)subMenu.currentOpt) {
+        case SETTINGS_RA_DISABLE_REMOTE_ACCESS:
+            opt = SETTINGS_RA_DISABLE_REMOTE_ACCESS;
+            break;
+        case SETTINGS_RA_DISABLE_MFA:
+            opt = SETTINGS_RA_DISABLE_MFA;
+            break;
+        case SETTINGS_RA_ENABLE_MFA:
+            opt = SETTINGS_RA_ENABLE_MFA;
+            break;
+        default:
+            assert(false);
+    }
+    Settings_setRemoteAccessPolicySetting(opt);
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 
@@ -596,38 +621,41 @@ static void setViewCheckDangerLevel()
 
     // setting the numOpts field to 0 prevents user from increment/dec the value
     subMenu.numOpts = 0;
-    // subMenu.currentOpt = analyzer.getDangerLevel();
+    subMenu.currentOpt = (int)(DangerAnalyzer_getDangerLevel() * 100);
 }
 static void setViewCheckNumTriggers()
 {
     subMenu.selectedOpt = MATCH_NONE_SELECTION_INDICATOR_VALUE;
     subMenu.numOpts = 0;
-    // subMenu.currentOpt = motionSensorController.getTriggerCount();
+    subMenu.currentOpt = (int)DangerAnalyzer_getNumTriggers();
 }
 
 static void setViewToggleMotionSensor()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
-    // subMenu.selectedOpt = (int)motionSensorController.getToggleState();
+    bool isEnabled = MotionSensor_isEnabled();
+    subMenu.selectedOpt = isEnabled ? 1 : 0
 }
 static void setViewToggleCamera()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
+    // todo
     // subMenu.selectedOpt = (int)camera.getToggleState();
 }
 static void setViewToggleLogger()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
-    // subMenu.selectedOpt = (int)logger.getToggleState();
+    bool isEnabled = Logger_isEnabled();
+    subMenu.selectedOpt = isEnabled ? 1 : 0
 }
 static void setViewSetDangerThreshold()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = 100;
-    // subMenu.selectedOpt = (int)settings.getDangerThreshold();
+    subMenu.selectedOpt = (int)Settings_getDangerThresholdSetting();
 }
 static void setViewResetDangerThreshold()
 {
@@ -644,44 +672,45 @@ static void setViewResetDangerLevel()
 static void setViewConfigureAutoLogout()
 {
     subMenu.currentOpt = 0;
-    subMenu.numOpts = (int)SOPT_AL_SENTINEL_MAX;
-    // subMenu.selectedOpt = (int)settings.getAutoLogoutConfigurationOption();
+    subMenu.numOpts = (int)SETTINGS_AL_SENTINEL_MAX;
+    subMenu.selectedOpt = (int)Settings_getAutoLogoutSetting();
 }
 static void setViewConfigureSecurityPolicy() 
 {
     subMenu.currentOpt = 0;
-    subMenu.numOpts = (int)SOPT_RA_SENTINEL_MAX;
-    // subMenu.selectedOpt = (int)settings.getAutoLogoutConfigurationOption();
+    subMenu.numOpts = (int)SETTINGS_RA_SENTINEL_MAX;
+    subMenu.selectedOpt = (int)Settings_getRemoteAccessPolicySetting();
 }
 
 
 // ------------------------- PUBLIC ------------------------- //
 void Menu_start(void)
 {
-    PasswordInput_init();
-
-
     isLoggedIn = false;
     setGuestView(&menu);
     setMenuState(&currentState);
-    // inactivityTimeoutMs = settings.getAutoLogoutTimeoutInMs();
 
-    // do pthread stuff
-
-    printf("starting gui...\n");
-
-    startGui();
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_create(&s_thread, &attr, mainloop, NULL);
 }
 void Menu_stop(void)
 {
-    // do pthread stuff
+    sendExitSignal();
+    pthread_join(s_thread, NULL);
 }
 
 
 //--------------- FOR TESTING-----------//
 int main(int argc, char **argv)
 {
-    Menu_start();
+    PasswordInput_init();
+
+    printf("starting gui...\n");
+
+    mainloop(NULL);
+
+    PasswordInput_cleanup();
     return 0;
 }
 

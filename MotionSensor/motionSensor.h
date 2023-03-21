@@ -26,7 +26,7 @@ PIRState MotionSensor_getState(void);
 
 // turns the motion sensor on or off. Returns true if it is on after toggling
 bool MotionSensor_toggle(void);
-
+bool MotionSensor_isEnabled(void);
 
 // cleanup resources
 void MotionSensor_cleanup(void);

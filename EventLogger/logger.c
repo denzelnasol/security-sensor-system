@@ -25,7 +25,7 @@ typedef enum {
 
 // ------------------------- PRIVATE ------------------------- //
 
-static bool toggle = true;
+static bool isEnabled = true;
 
 static pthread_mutex_t s_fmutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_toggleMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -150,8 +150,18 @@ bool Logger_toggle(void)
     bool isTurnOn = false;
     pthread_mutex_lock(&s_toggleMutex);
     {
-        toggle = !toggle;
-        isTurnOn = toggle;
+        isEnabled = !isEnabled;
+        isTurnOn = isEnabled;
+    }
+    pthread_mutex_unlock(&s_toggleMutex);
+    return isTurnOn;
+}
+bool Logger_isEnabled(void)
+{
+    bool isTurnOn = false;
+    pthread_mutex_lock(&s_toggleMutex);
+    {
+        isTurnOn = isEnabled;
     }
     pthread_mutex_unlock(&s_toggleMutex);
     return isTurnOn;

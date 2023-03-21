@@ -16,5 +16,6 @@ void Logger_clearLogs(void);
 
 // returns true if logging is ON. false otherwise
 bool Logger_toggle(void);
+bool Logger_isEnabled(void);
 
 #endif

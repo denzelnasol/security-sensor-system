@@ -18,6 +18,8 @@
 
 static long long timeSinceLastDetectedInMs = 0;
 static History detectionHistory;
+static long long triggerCount = 0;
+static pthread_mutex_t s_countMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void *mainloop(void* arg);
 static pthread_t s_thread;
@@ -46,6 +48,25 @@ static void sendStoppingSignal()
         s_stop = true;
     }
     pthread_mutex_unlock(&s_stopMutex);
+}
+
+static long long getTriggerCount()
+{
+    long long count = 0;
+    pthread_mutex_lock(&s_countMutex);
+    {
+        count = triggerCount;
+    }
+    pthread_mutex_unlock(&s_countMutex);
+    return count;
+}
+static void addTriggerCount()
+{
+    pthread_mutex_lock(&s_countMutex);
+    {
+        triggerCount++;
+    }
+    pthread_mutex_unlock(&s_countMutex);
 }
 
 static double getDangerLevel()
@@ -140,6 +161,7 @@ static void *mainloop(void *args)
         if (MotionSensor_getState() == PIR_DETECT) {
             timeSinceLastDetectedInMs = Timer_timestampInMs() - timeSinceLastDetectedInMs;
             numDetections++;
+            addTriggerCount();
         }
         Buffer_add(&detectionHistory, numDetections);
 
@@ -186,6 +208,10 @@ double DangerAnalyzer_getDangerLevel(void)
     }
     pthread_mutex_unlock(&s_dangerLevelMutex);
     return level;
+}
+long long DangerAnalyzer_getNumTriggers(void)
+{
+    return getTriggerCount();
 }
 
 void DangerAnalyzer_stop(void)

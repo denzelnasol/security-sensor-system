@@ -68,7 +68,7 @@ double Buffer_frequency(const History *buffer)
 double Buffer_frequencyWindow(const History *buffer, int windowSize)
 {
     Record r1 = getLatestReading(buffer);
-    Record r2 = getOldestReading(buffer);
+    Record r2 = getNLatestReading(buffer, windowSize);
     if (r1.timestampMs == r2.timestampMs) {
         return 0;
     }

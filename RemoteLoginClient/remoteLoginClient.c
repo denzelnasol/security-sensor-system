@@ -24,9 +24,8 @@
 #include "../Utilities/utilities.h"
 #include "../EventLogger/logger.h"
 
-#define PASSWORD_LENGTH                         32
-#define MFA_BUFFER_SIZE                         4
-#define REQ_TIMEOUT_MS                          1000
+#define PASSWORD_LENGTH                         16
+#define MFA_BUFFER_SIZE                         5
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -157,6 +156,8 @@ static void login()
     ClientNet_send(command, strlen(command));
     recvFromServ(response);
 
+    printf("\n");
+
     if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
         printf("Logged in as admin.\n");
@@ -168,7 +169,6 @@ static void login()
     
     // extra MFA steps
     printf("%s", response);
-    printf("4-digits (no spaces!)\n");
 
     // prmpt user for mfa code
     char mfaPassword[MFA_BUFFER_SIZE];
@@ -404,6 +404,7 @@ int main(int argc, char **argv)
         prompt();
         getInput(command, sizeof(command));
         signal = execute(command);
+        command[0] = 0;
     }
 
     ClientNet_cleanup();

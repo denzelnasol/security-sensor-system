@@ -109,7 +109,16 @@ bool MotionSensor_toggle(void)
     pthread_mutex_unlock(&s_toggleMutex);
     return isTurnOn;
 }
-
+bool MotionSensor_isEnabled(void)
+{
+    bool isTurnOn = false;
+    pthread_mutex_lock(&s_toggleMutex);
+    {
+        isTurnOn = isActive;
+    }
+    pthread_mutex_unlock(&s_toggleMutex);
+    return isTurnOn;
+}
 
 // cleanup resources
 void MotionSensor_cleanup(void)

@@ -47,12 +47,10 @@ typedef enum {
     SIGNAL_STOP,
 } Signal;
 
-
+static const char *parseClientRequest(const char *request, int sizeOfCommand);
 static bool parseNumber(const char *number, int *result, char *response);
 static void getDangerLevel(char *response);
 static void getNumTriggers(char *response);
-static void loginMFA(void);
-static void login(char *response);
 static void toggle(char *response);
 static void resetDangerThreshold(char *response);
 static void resetDangerLevel(char *response);
@@ -60,6 +58,13 @@ static void setDangerThreshold(char *response);
 static void configureSettings(char *response);
 static void configureAutoLogout(char *response);
 static void configureRemoteAccess(char *response);
+
+static void ping(char *response);
+static void loginMFA(const char *command, char *response);
+static void login(const char *command, char *response);
+static void executeClientRequest(const char *command, char *cmd, char *response);
+
+static Signal executeCommand(char *cmd, char *response);
 static Signal execute(char *command, char *response);
 
 
@@ -320,7 +325,7 @@ static void login(const char *command, char *response)
     }
     
     if (Settings_getRemoteAccessPolicySetting() == SETTINGS_RA_ENABLE_MFA) {
-        snprintf(response, RESPONSE_PACKET_SIZE, "Enter MFA code displayed on LEDs: ");
+        snprintf(response, RESPONSE_PACKET_SIZE, "Enter MFA code displayed on LEDs (4-digits and no spaces!): ");
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     }
