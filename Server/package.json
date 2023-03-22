@@ -13,7 +13,8 @@
 		"ws": "latest"
 	},
 	"description": "Webcam video streaming",
-	"name": "webcam-stream",
-	"type": "module",
-	"version": "0.0.1"
+	"name": "beagle-cam",
+	"version": "0.0.1",
+	"author": "BeagleCam",
+	"license": "ISC"
 }
