@@ -15,15 +15,18 @@ int main(int argc, char **argv)
     // Joystick_init();
 
     Stream_Controller_start();
-
-    PInputSequence seq = PasswordInput_getInputSequence();
-    printf("got\n");
-    for (int i = 0; i < seq.size; i++) {
-        printf("%d: %d\n", i, seq.input[i]);
+    while (true) {
+        
     }
 
-    Joystick_cleanup();
-    MotionSensorController_stop();
-    Stream_Controller_stop();
+    // PInputSequence seq = PasswordInput_getInputSequence();
+    // printf("got\n");
+    // for (int i = 0; i < seq.size; i++) {
+    //     printf("%d: %d\n", i, seq.input[i]);
+    // }
+
+    // Joystick_cleanup();
+    // MotionSensorController_stop();
+    // Stream_Controller_stop();
     return 0;
 }

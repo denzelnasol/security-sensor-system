@@ -15,7 +15,7 @@
 
 #define STREAM_COMMAND "./capture -F -o -c0 | ffmpeg -i pipe:0 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4000k -minrate 4000k -maxrate 4000k -bufsize 1835k -muxdelay 0.1 -framerate 30 -bf 0 udp://192.168.7.1:8080"
 
-#define STREAM_DURATION_MS  15000
+#define STREAM_DURATION_MS  120000
 #define SLEEP_FREQUENCY_MS  10
 
 // ------------------------- PRIVATE ------------------------- //
@@ -50,8 +50,8 @@ void static executeStream(int duration) {
     // Execute the shell command (output into pipe)
     FILE *pipe = popen(STREAM_COMMAND, READ);
 
-    // signal(SIGALRM, exit);
-    // alarm(duration);
+    signal(SIGALRM, exit);
+    alarm(duration);
 
     // Ignore output of the command; but consume it
     // so we don't get an error when closing the pipe.
@@ -60,7 +60,7 @@ void static executeStream(int duration) {
         if (fgets(buffer, sizeof(buffer), pipe) == NULL) break;
     }
 
-    // alarm(0);
+    alarm(0);
 
     // Get the exit code from the pipe; non-zero is an error:
     int exitCode = WEXITSTATUS(pclose(pipe));
@@ -74,15 +74,15 @@ void static executeStream(int duration) {
 void *streamListenerThread(void *args)
 {
     while (!isStoppingSignalReceived()) {
-        // PIRState state = MotionSensor_getState();
-        printf("STREAM STARTING");
-        if (!isStreamingOn) {
-            printf("THIS RAN!!!\n");
+        PIRState state = MotionSensor_getState();
+        if (state == PIR_DETECT && !isStreamingOn) {
+            printf("Stream Starting\n");
             // start streaming for 15 seconds
             executeStream(STREAM_DURATION_MS);
             isStreamingOn = true;
-            // Utilities_sleepForMs(STREAM_DURATION_MS);
-            // isStreamingOn = false;
+            Utilities_sleepForMs(STREAM_DURATION_MS);
+            printf("STREAM ENDING\n");
+            isStreamingOn = false;
         }
 
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
