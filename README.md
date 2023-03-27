@@ -27,3 +27,8 @@ Andy C.
 Mathew W.
 Harry N.
 Denzel N.
+
+
+Required libraries for webcam:<br>
+sudo apt-get install ffmpeg<br>
+sudo apt-get install libopencv-dev<br>
