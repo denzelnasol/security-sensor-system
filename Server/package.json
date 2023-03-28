@@ -1,0 +1,20 @@
+{
+	"dependencies": {
+		"cors": "^2.8.5",
+		"dgram": "^1.0.1",
+		"express": "^4.18.2",
+		"fluent-ffmpeg": "^2.1.2",
+		"http-server": "^14.1.1",
+		"jquery": "latest",
+		"mime": "latest",
+		"node": "^19.6.1",
+		"socket.io": "^4.6.1",
+		"socket.io-client": "^4.6.1",
+		"ws": "latest"
+	},
+	"description": "Webcam video streaming",
+	"name": "beagle-cam",
+	"version": "0.0.1",
+	"author": "BeagleCam",
+	"license": "ISC"
+}
