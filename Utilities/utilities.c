@@ -36,6 +36,25 @@ bool Utililties_isFileExists(const char *pFilePath)
     return true;
 }
 
+int Utilities_readNumberFromFile(const char* filePath) {
+    FILE* file = fopen(filePath, READ);
+    if (!file) {
+        printf("ERROR: Unable to open voltage input file. Cape loaded?\n");
+        printf(" Check /boot/uEnv.txt for correct options.\n");
+        exit(-1);
+    }
+
+    int a2dReading = 0;
+    int itemsRead = fscanf(file, "%d", &a2dReading);
+    if (itemsRead <= 0) {
+        printf("ERROR: Unable to read values from voltage input file.\n");
+        exit(-1);
+    }
+
+    fclose(file);
+    return a2dReading;
+}
+
 void Utilities_exportGpioPin(const char *pFilePath, int gpioNumber)
 {
     if (!Utililties_isFileExists(pFilePath)) {
