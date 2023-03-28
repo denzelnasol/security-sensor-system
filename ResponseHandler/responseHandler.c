@@ -448,10 +448,3 @@ void ResponseHandler_start(void)
     ServerNet_cleanup();
 }
 
-int main(int argc, char **argv)
-{
-    printf("starting server\n");
-    ResponseHandler_start();
-    return 0;
-}
-

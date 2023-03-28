@@ -29,7 +29,7 @@ CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
 all: bbg sshclient
 
 bbg:
-	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
+	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread -lcurl
 	@echo "Building node server..."
 	sudo mkdir -p $(OUTDIR)/Server-copy/
 	sudo cp -R Server/* $(OUTDIR)/Server-copy/
