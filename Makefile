@@ -1,29 +1,45 @@
 WEBCAM = WebCam/Recorder/Recorder.c WebCam/Stream/Stream.c WebCam/Stream/StreamController.c
-MOTION = MotionSensor/motionSensor.c MotionSensor/motionSensorController.c
+MOTION = MotionSensor/motionSensor.c
 UTILITIES = Utilities/utilities.c Timer/timer.c
 PASSWORD = PasswordInput/passwordInput.c
 JOYSTICK = Joystick/joystick.c
-SOURCE = $(UTILITIES) ${MOTION} ${JOYSTICK} ${PASSWORD} ${WEBCAM}
+
+ANALYZER = DangerAnalyzer/dangerAnalyzer.c DangerAnalyzer/CircularBuffer/circularBuffer.c
+HTTP = HttpRequest/http.c
+LOGGER = EventLogger/logger.c
+LED = LEDMFA/ledMfa.c
+SEG_DISPLAY = LEDDisplay/ledDisplay.c
+MENU = Menu/menu.c
+PWMGR = PasswordManager/passwordManager.c
+SERVER = ResponseHandler/responseHandler.c ResponseHandler/serverNet.c
+SETTINGS = Settings/settings.c
+
+SOURCE1 = $(UTILITIES) ${MOTION} ${JOYSTICK} ${PASSWORD} ${WEBCAM}
+SOURCE2 = $(ANALYZER) $(HTTP) $(LOGGER) $(LED) $(SEG_DISPLAY) $(MENU) $(PWMGR) $(SERVER) $(SETTINGS)
+SOURCE = securitySensorSystem.c $(SOURCE1) $(SOURCE2)
 
 OUTDIR = $(HOME)/cmpt433/public/myApps
-OUTFILE = securitySensorSystem
+OUTFILE = beaglecam
 
 CROSS_COMPILE = arm-linux-gnueabihf-
 CC_C = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
 #CFLAGS = -Wall -g -std=c99 -D _POSIX_C_SOURCE=200809L -Wshadow # TEMPORARY: Replace with commented code when testing is finished
 
-all:
-	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
+all: bbg sshclient
+
+bbg:
+	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
+	@echo "Building node server..."
 	sudo mkdir -p $(OUTDIR)/Server-copy/
 	sudo cp -R Server/* $(OUTDIR)/Server-copy/
 	cd $(OUTDIR)/Server-copy/ && sudo npm install
 
-wsl:
-	gcc $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  ../build/$(OUTFILE) -lpthread
+sshclient:
+	@make --directory=RemoteLoginClient
 
 src:
-	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread
+	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread
 
 clean:
 	rm -f *~ *.o $(OUTDIR)/$(OUTFILE)
@@ -76,7 +92,7 @@ clean:
 # #################
 
 # all:
-# 	$(CC_C) $(CFLAGS) -pthread securitySensorSystem.c $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
+# 	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread
 
 
 # wsl:

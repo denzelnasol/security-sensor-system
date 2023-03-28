@@ -31,6 +31,17 @@ static pthread_mutex_t s_fmutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_toggleMutex = PTHREAD_MUTEX_INITIALIZER;
 
 
+static bool isActivated()
+{
+    bool isTurnOn = false;
+    pthread_mutex_lock(&s_toggleMutex);
+    {
+        isTurnOn = isEnabled;
+    }
+    pthread_mutex_unlock(&s_toggleMutex);
+    return isTurnOn;
+}
+
 // source: https://stackoverflow.com/questions/1442116/how-to-get-the-date-and-time-values-in-a-c-program
 static void getTimeStamp(char *timeStampBuffer, size_t size)
 {
@@ -107,6 +118,9 @@ static void writeMessage(const char *message, LogLevel level)
 
 void Logger_logInfo(const char *message)
 {
+    if (!isActivated()) {
+        return;
+    }
     pthread_mutex_lock(&s_fmutex);
     {
         writeMessage(message, INFO);
@@ -115,6 +129,9 @@ void Logger_logInfo(const char *message)
 }
 void Logger_logWarning(const char *message)
 {
+    if (!isActivated()) {
+        return;
+    }
     pthread_mutex_lock(&s_fmutex);
     {
         writeMessage(message, WARNING);
@@ -123,6 +140,9 @@ void Logger_logWarning(const char *message)
 }
 void Logger_logError(const char *message)
 {
+    if (!isActivated()) {
+        return;
+    }
     pthread_mutex_lock(&s_fmutex);
     {
         writeMessage(message, DANGER);
@@ -158,12 +178,6 @@ bool Logger_toggle(void)
 }
 bool Logger_isEnabled(void)
 {
-    bool isTurnOn = false;
-    pthread_mutex_lock(&s_toggleMutex);
-    {
-        isTurnOn = isEnabled;
-    }
-    pthread_mutex_unlock(&s_toggleMutex);
-    return isTurnOn;
+    return isActivated();
 }
 

@@ -251,7 +251,6 @@ static void logout()
 }
 static Signal login()
 {
-    printf("loggin in\n");
     LedDisplay_showSpecial();
     
     Timer_start(getAutoLogoutTimeoutInMs(), &inactivityTimer);
@@ -277,17 +276,19 @@ static Signal login()
 
     // handle error states
     if (passwordStatus == P_INPUT_NO_MATCH) {
-        printf("incorrect password\n");
+        // printf("incorrect password\n");
         back(&currentState);
         return SIGNAL_CONTINUE;
     }
     if (passwordStatus == P_INPUT_TOO_LONG) {
-        printf("password too long\n");
+        // printf("password too long\n");
         back(&currentState);
         return SIGNAL_CONTINUE;
     }
 
     assert(passwordStatus == P_INPUT_MATCH);
+
+    Logger_logInfo("User logged in as admin on menu system.");
 
     setAdminView(&menu);
     setMenuState(&currentState);
@@ -435,6 +436,7 @@ static void toggleMotionSensor()
 {
     if (subMenu.currentOpt != subMenu.selectedOpt) {
         MotionSensor_toggle();
+        Logger_logInfo("motion sensor toggled on menu system.");
     }
     subMenu.selectedOpt = subMenu.currentOpt;
 }
@@ -445,6 +447,7 @@ static void toggleCamera()
     // CamToggle val = CAM_OFF;
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
         // val = CAM_ON;
+        Logger_logInfo("camera toggled on menu system.");
     }
     // camController.toggle(val);
     subMenu.selectedOpt = subMenu.currentOpt;
@@ -453,6 +456,7 @@ static void toggleCamera()
 static void toggleLogger()
 {
     if (subMenu.currentOpt != subMenu.selectedOpt) {
+        Logger_logInfo("logger toggled on menu system.");
         Logger_toggle();
     }
     subMenu.selectedOpt = subMenu.currentOpt;
@@ -462,6 +466,9 @@ static void setDangerThreshold()
 {
     int newDangerThresh = subMenu.currentOpt;
     Settings_setDangerThresholdSetting(newDangerThresh);
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "danger threshold set to %d on menu system.", newDangerThresh);
+    Logger_logInfo(buffer);
     subMenu.selectedOpt = newDangerThresh;
 }
 // for submenu options with confirm/cancel, when user selects an option, perform the action and then
@@ -470,6 +477,7 @@ static void resetDangerThreshold()
 {
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
         Settings_setDangerThresholdSetting(DANGER_ANALYZER_DEFAULT_THRESHOLD);
+        Logger_logInfo("danger threshold reset on menu system.");
     }
     back(&currentState);
 }
@@ -477,6 +485,7 @@ static void resetDangerLevel()
 {
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
         DangerAnalyzer_resetDangerLevel();
+        Logger_logWarning("danger level reset on menu system")
     }
     back(&currentState);
 }
@@ -498,6 +507,7 @@ static void configureAutoLogout()
             assert(false);
     }
     Settings_setAutoLogoutSetting(opt);
+    Logger_logInfo("auto logout settings changed by admin on menu system");
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 
@@ -518,6 +528,7 @@ static void configureSecurityPolicy()
             assert(false);
     }
     Settings_setRemoteAccessPolicySetting(opt);
+    Logger_logInfo("security policy settings changed by admin on menu system");
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 
@@ -700,22 +711,22 @@ void Menu_stop(void)
 
 
 //--------------- FOR TESTING-----------//
-int main(int argc, char **argv)
-{
-    Joystick_init();
-    PasswordInput_init();
-    LedDisplay_start();
+// int main(int argc, char **argv)
+// {
+//     Joystick_init();
+//     PasswordInput_init();
+//     LedDisplay_start();
 
-    isLoggedIn = false;
-    setGuestView(&menu);
-    setMenuState(&currentState);
-    printf("starting gui...\n");
+//     isLoggedIn = false;
+//     setGuestView(&menu);
+//     setMenuState(&currentState);
+//     printf("starting gui...\n");
 
-    mainloop(NULL);
+//     mainloop(NULL);
 
-    LedDisplay_stop();
-    PasswordInput_cleanup();
-    Joystick_cleanup();
-    return 0;
-}
+//     LedDisplay_stop();
+//     PasswordInput_cleanup();
+//     Joystick_cleanup();
+//     return 0;
+// }
 

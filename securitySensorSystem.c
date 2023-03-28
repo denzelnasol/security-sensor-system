@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "WebCam/Recorder/Recorder.h"
-#include "MotionSensor/motionSensorController.h"
 #include "PasswordInput/passwordInput.h"
 #include "Joystick/joystick.h"
 #include "WebCam/Stream/StreamController.h"
@@ -11,7 +10,6 @@ int main(int argc, char **argv)
     printf("hello world\n");
     // Recorder_startRecording(300, "test.raw");
 
-    // MotionSensorController_start();
     // Joystick_init();
 
     Stream_Controller_start();
@@ -26,7 +24,6 @@ int main(int argc, char **argv)
     // }
 
     // Joystick_cleanup();
-    // MotionSensorController_stop();
     // Stream_Controller_stop();
     return 0;
 }

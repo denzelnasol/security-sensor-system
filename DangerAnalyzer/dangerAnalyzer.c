@@ -11,6 +11,7 @@
 #include "../MotionSensor/motionSensor.h"
 #include "../Utilities/utilities.h"
 #include "../Timer/timer.h"
+#include "../HttpRequest/http.h"
 
 // the sleep should be about 1s because the motion sensor is debounced by the hardware for 2s
 // setting it to 1s will always catch detections
@@ -174,6 +175,12 @@ static void *mainloop(void *args)
             // buzzer.soundAlarm();
             // 
         }
+
+        // send the data to the server
+        HttpPostData postData;
+        postData.dangerLevel = level;
+        Http_post(&postData);
+
         Utilities_sleepForMs(SLEEP_MS);
     }
     return NULL;
