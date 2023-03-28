@@ -13,8 +13,9 @@ MENU = Menu/menu.c
 PWMGR = PasswordManager/passwordManager.c
 SERVER = ResponseHandler/responseHandler.c ResponseHandler/serverNet.c
 SETTINGS = Settings/settings.c
+CONTROLLER = Controller/controller.c
 
-SOURCE1 = $(UTILITIES) ${MOTION} ${JOYSTICK} ${PASSWORD} ${WEBCAM}
+SOURCE1 = $(UTILITIES) ${MOTION} ${JOYSTICK} ${PASSWORD} ${WEBCAM} $(CONTROLLER)
 SOURCE2 = $(ANALYZER) $(HTTP) $(LOGGER) $(LED) $(SEG_DISPLAY) $(MENU) $(PWMGR) $(SERVER) $(SETTINGS)
 SOURCE = securitySensorSystem.c $(SOURCE1) $(SOURCE2)
 
