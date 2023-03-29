@@ -17,6 +17,7 @@
 
 #define STREAM_DURATION_MS  120000
 #define SLEEP_FREQUENCY_MS  10
+#define BUFFER_SIZE         1024
 
 // ------------------------- PRIVATE ------------------------- //
 
@@ -55,7 +56,7 @@ void static executeStream(int duration) {
 
     // Ignore output of the command; but consume it
     // so we don't get an error when closing the pipe.
-    char buffer[UTILITIES_BUFFER_SIZE];
+    char buffer[BUFFER_SIZE];
     while (!feof(pipe) && !ferror(pipe)) {
         if (fgets(buffer, sizeof(buffer), pipe) == NULL) break;
     }
