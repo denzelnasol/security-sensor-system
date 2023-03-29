@@ -36,10 +36,10 @@ void Http_post(const HttpPostData *data)
 {
     curl_easy_reset(httpHandle);
 
-    char data[POST_BUFFER_SIZE];
-    snprintf(data, sizeof(data), "dangerLevel=%f", data->dangerLevel);
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data);
-    curl_easy_setopt(httpHandle, CURLOPT_POSTFIELDS, data);
+    char buff[POST_BUFFER_SIZE];
+    snprintf(buff, sizeof(buff), "dangerLevel=%f", data->dangerLevel);
+    curl_easy_setopt(httpHandle, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(httpHandle, CURLOPT_POSTFIELDS, buff);
     curl_easy_setopt(httpHandle, CURLOPT_URL, ENDPOINT_URL);
 
     CURLcode res = curl_easy_perform(httpHandle);
@@ -53,3 +53,4 @@ void Http_cleanup(void)
     curl_easy_cleanup(httpHandle);
 }
 
+int main(){return 0;}

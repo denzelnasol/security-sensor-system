@@ -485,7 +485,7 @@ static void resetDangerLevel()
 {
     if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
         DangerAnalyzer_resetDangerLevel();
-        Logger_logWarning("danger level reset on menu system")
+        Logger_logWarning("danger level reset on menu system");
     }
     back(&currentState);
 }

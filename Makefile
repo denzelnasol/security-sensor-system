@@ -27,10 +27,12 @@ CC_C = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
 #CFLAGS = -Wall -g -std=c99 -D _POSIX_C_SOURCE=200809L -Wshadow # TEMPORARY: Replace with commented code when testing is finished
 
+LFLAGS = -L$(HOME)/cmpt433/public/curl_lib_BBB
+
 all: bbg sshclient
 
 bbg:
-	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) -lpthread -lcurl
+	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread -lcurl
 	@echo "Building node server..."
 	sudo mkdir -p $(OUTDIR)/Server-copy/
 	sudo cp -R Server/* $(OUTDIR)/Server-copy/

@@ -38,7 +38,7 @@ static char inputToChar(JoystickInput input)
 static void sequenceToString(const Sequence *seq, char *buffer)
 {
     for (int i = 0; i < seq->size; i++) {
-        buffer[i] = charToInput(seq->sequence[i]);
+        buffer[i] = inputToChar(seq->sequence[i]);
     }
     buffer[seq->size] = 0;
 }
