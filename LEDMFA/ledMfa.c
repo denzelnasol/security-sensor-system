@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 #include <ctype.h>
 #include <pthread.h>
 
@@ -15,6 +16,13 @@
 #define LED2_BRIGHTNESS         "/sys/class/leds/beaglebone:green:usr2/brightness"
 #define LED3_BRIGHTNESS         "/sys/class/leds/beaglebone:green:usr3/brightness"
 
+#define LED0_TRIGGER            "/sys/class/leds/beaglebone:green:usr0/trigger"
+#define LED1_TRIGGER            "/sys/class/leds/beaglebone:green:usr1/trigger"
+#define LED2_TRIGGER            "/sys/class/leds/beaglebone:green:usr2/trigger"
+#define LED3_TRIGGER            "/sys/class/leds/beaglebone:green:usr3/trigger"
+
+#define TRIGGER_OFF             "none"
+
 #define ON                      1
 #define OFF                     0
 
@@ -22,7 +30,7 @@
 #define REFRESH_MFA_FREQ_MS     30000
 
 static Timer timer;
-static char currentCode[MFA_PASSWORD_LIMIT] = {0};
+static char currentCode[MFA_PASSWORD_LIMIT];
 
 
 static void *mainloop(void *args);
@@ -53,12 +61,24 @@ static void sendExitSignal()
     pthread_mutex_unlock(&s_stopMutex);
 }
 
+static void turnOffTriggers()
+{
+    Utilities_writeStringValueToFile(TRIGGER_OFF, LED0_TRIGGER);
+    Utilities_writeStringValueToFile(TRIGGER_OFF, LED1_TRIGGER);
+    Utilities_writeStringValueToFile(TRIGGER_OFF, LED2_TRIGGER);
+    Utilities_writeStringValueToFile(TRIGGER_OFF, LED3_TRIGGER);
+}
+
+static int charToBrightness(char ch)
+{
+    return ch == '1' ? 1 : 0;
+}
 static void displayCode(const char *code)
 {
-    Utilities_writeIntValueToFile(code[0], LED0_BRIGHTNESS);
-    Utilities_writeIntValueToFile(code[1], LED1_BRIGHTNESS);
-    Utilities_writeIntValueToFile(code[2], LED2_BRIGHTNESS);
-    Utilities_writeIntValueToFile(code[3], LED3_BRIGHTNESS);
+    Utilities_writeIntValueToFile(charToBrightness(code[0]), LED0_BRIGHTNESS);
+    Utilities_writeIntValueToFile(charToBrightness(code[1]), LED1_BRIGHTNESS);
+    Utilities_writeIntValueToFile(charToBrightness(code[2]), LED2_BRIGHTNESS);
+    Utilities_writeIntValueToFile(charToBrightness(code[3]), LED3_BRIGHTNESS);
 }
 
 static void setCurrentCode(const char *code)
@@ -114,8 +134,13 @@ static void *mainloop(void *args)
 
 void Mfa_start(void)
 {
-    Timer_start(0, &timer);
+    struct timespec ts = {0};
+    timer.end = ts;
+    memset(currentCode, '0', sizeof(currentCode));
     srand(time(NULL));
+
+    turnOffTriggers();
+
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_create(&s_thread, &attr, mainloop, NULL);
