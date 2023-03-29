@@ -1,8 +1,8 @@
 OUTDIR = $(HOME)/cmpt433/public/myApps
 OUTFILE = ssh-client
 
-DEPS = Utilities/utilities.c EventLogger/logger.c RemoteLoginClient/clientNet.c
-SSH_CLIENT = RemoteLoginClient/remoteLoginClient.c
+DEPS = ../Utilities/utilities.c ../EventLogger/logger.c clientNet.c
+SSH_CLIENT = remoteLoginClient.c
 SOURCE = $(DEPS) $(SSH_CLIENT)
 
 CROSS_COMPILE = arm-linux-gnueabihf-

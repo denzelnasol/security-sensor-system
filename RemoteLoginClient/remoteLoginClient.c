@@ -127,7 +127,7 @@ static void getPassword(char *buffer, size_t size)
     term.c_lflag &= ~ECHO;
     tcsetattr(fileno(stdin), 0, &term);
 
-    getInput(password, size);
+    getInput(buffer, size);
 
     term.c_lflag |= ECHO;
     tcsetattr(fileno(stdin), 0, &term);

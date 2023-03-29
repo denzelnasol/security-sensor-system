@@ -53,4 +53,3 @@ void Http_cleanup(void)
     curl_easy_cleanup(httpHandle);
 }
 
-int main(){return 0;}
