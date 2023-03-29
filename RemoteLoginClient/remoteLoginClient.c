@@ -182,6 +182,8 @@ static void login()
         printf("Already logged in.\n");
         return;
     }
+    Logger_logInfo("attempted login by guest");
+
     printf("Enter password for user admin: ");
 
     char password[PASSWORD_LENGTH];
@@ -196,9 +198,11 @@ static void login()
 
     if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
+        Logger_logInfo("guest logged in as admin");
         printf("Logged in as admin.\n");
         return;
     } else if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        Logger_logInfo("gus loggedin failed");
         printf("Incorrect password.\n");
         return;
     }
@@ -210,6 +214,7 @@ static void login()
     char mfaPassword[MFA_BUFFER_SIZE];
     getInput(mfaPassword, sizeof(mfaPassword));
     if (!mfaPatternIsValid(mfaPassword, sizeof(mfaPassword))) {
+        Logger_logInfo("gus loggedin failed");
         printf("Incorrect format of MFA code. Only 0s and 1s allowed.\n");
         return;
     }
@@ -221,8 +226,10 @@ static void login()
 
     if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
         isLoggedIn = true;
+        Logger_logInfo("gus logged in as admin");
         printf("Logged in as admin.\n");
     } else if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        Logger_logInfo("gus loggedin failed");
         printf("Incorrect MFA code.\n");
     } else {
         printf("%s", response);
@@ -284,6 +291,7 @@ static void clearLogs()
 }
 static void accessHost()
 {
+    Logger_logInfo("admin request host access");
     exitCode = EXIT_CODE_HACCESS;
 }
 static void stop()
@@ -293,6 +301,7 @@ static void stop()
     char response[RESPONSE_PACKET_SIZE];
     recvFromServ(response);
 
+    Logger_logWarning("admin has stopped beaglecam");
     printf("%s\n", response);
 
     exitCode = EXIT_CODE_HACCESS;
@@ -304,6 +313,7 @@ static void resetDangerThreshold()
     char response[RESPONSE_PACKET_SIZE];
     recvFromServ(response);
 
+    Logger_logInfo("admin reset danger threhsold");
     printf("%s\n", response);
 }
 static void resetDangerLevel()
@@ -313,10 +323,13 @@ static void resetDangerLevel()
     char response[RESPONSE_PACKET_SIZE];
     recvFromServ(response);
 
+    Logger_logInfo("admin reset danger level");
     printf("%s\n", response);
 }
 static void changePassword()
 {
+    Logger_logWarning("user attempted command change password");
+
     // verify identity
     printf("Enter current password: ");
 
@@ -354,8 +367,10 @@ static void changePassword()
     recvFromServ(response);
 
     if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        Logger_logInfo("admin password change rejected");
         printf("Password change rejected.\n");
     } else if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
+        Logger_logInfo("admin changed login password");
         printf("Password change ok.\n");
     }
 }
@@ -431,8 +446,10 @@ static void changeJoystickPattern()
     recvFromServ(response);
 
     if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
+        Logger_logInfo("menu system password change rejected");
         printf("Pattern change rejected.\n");
     } else if (strncmp(response, STATUS_CODE_OK, sizeof(STATUS_CODE_OK)) == 0) {
+        Logger_logInfo("admin changed menu system password");
         printf("Pattern change ok.\n");
     }
 }
@@ -452,6 +469,7 @@ static Signal execute(char *command)
         return SIGNAL_NONE;
     }
     if (strncmp(cmd, COMMAND_END_SESSION, sizeof(COMMAND_END_SESSION)) == 0) {
+        Logger_logInfo("user has ended the session");
         exitCode = EXIT_CODE_STANDARD;
         return SIGNAL_STOP;
 
@@ -549,6 +567,7 @@ static void sendPing(void)
     recvFromServ(response);
     if (strncmp(response, STATUS_CODE_BAD, sizeof(STATUS_CODE_BAD)) == 0) {
         ClientNet_cleanup();
+        Logger_logInfo("ssh connection refused by server");
         printf("Connection refused by the server.\n");
         exit(EXIT_CODE_STANDARD);
     }
@@ -557,6 +576,9 @@ static void sendPing(void)
 int main(int argc, char **argv)
 {
     signal(SIGINT, sigintHandler);
+
+    Logger_logInfo("guest connected via remote ssh client");
+
     ClientNet_init();
 
     // check if the server wants to ping
