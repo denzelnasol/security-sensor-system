@@ -28,6 +28,10 @@ static pthread_mutex_t s_stoppingMutex = PTHREAD_MUTEX_INITIALIZER;
 static bool s_stoppingSignal = false;
 
 static bool isStreamingOn = false;
+static FILE *streamingPipe;
+
+static bool hasStreamingOptionChanged = false;
+static pthread_mutex_t s_hasStreamingOptionChangedMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static StreamingOption streamingOption = STREAM_TRIGGER;
 static pthread_mutex_t s_streamingMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -54,9 +58,20 @@ static void setStreamingOption(StreamingOption opt)
 {
     pthread_mutex_lock(&s_streamingMutex);
     {
+        hasStreamingOptionChanged = (streamingOption != opt);
         streamingOption = opt;
     }
     pthread_mutex_unlock(&s_streamingMutex);
+}
+static bool isStreamingOptionChanged()
+{
+    bool x;
+    pthread_mutex_lock(&s_streamingMutex);
+    {
+        x = hasStreamingOptionChanged;
+    }
+    pthread_mutex_unlock(&s_streamingMutex);
+    return x;
 }
 static StreamingOption getStreamingOption()
 {
@@ -68,14 +83,8 @@ static StreamingOption getStreamingOption()
     pthread_mutex_unlock(&s_streamingMutex);
     return opt;
 }
-
-void static executeStream(int duration) {
-    // Execute the shell command (output into pipe)
-    FILE *pipe = popen(STREAM_COMMAND, READ);
-
-    signal(SIGALRM, exit);
-    alarm(duration);
-
+void static waitForStream(FILE *pipe)
+{
     // Ignore output of the command; but consume it
     // so we don't get an error when closing the pipe.
     char buffer[BUFFER_SIZE];
@@ -93,47 +102,78 @@ void static executeStream(int duration) {
         printf(" exit code: %d\n", exitCode);
     }
 }
+void static executeStream(int duration) {
+    // Execute the shell command (output into pipe)
+    FILE *pipe = popen(STREAM_COMMAND, READ);
 
+    signal(SIGALRM, exit);
+    alarm(duration);
+
+    waitForStream(pipe);
+}
+void static killStream(FILE *pipe)
+{
+    signal(SIGALRM, exit);
+    alarm(1);
+
+    waitForStream(pipe);
+    isStreamingOn = false;
+}
+void onAlarm(int x)
+{
+    exit(x);
+    killStream(streamingPipe);
+}
 static void onStreamTrigger()
 {
+    if (isStreamingOn) {
+        killStream(streamingPipe);
+    }
     PIRState state = MotionSensor_getState();
-    if (state == PIR_DETECT && !isStreamingOn) {
-        printf("Stream Starting\n");
+    if (state == PIR_DETECT) {
         // start streaming for 15 seconds
-        executeStream(STREAM_DURATION_MS);
+        signal(SIGALRM, onAlarm);
+        alarm(STREAM_DURATION_MS);
+
+        streamingPipe = popen(STREAM_COMMAND, READ);
         isStreamingOn = true;
-        Utilities_sleepForMs(STREAM_DURATION_MS);
-        printf("STREAM ENDING\n");
-        isStreamingOn = false;
     }
 }
 static void onStreamOff()
 {
-
+    if (isStreamingOn) {
+        killStream(streamingPipe);
+    }
 }
 static void onStreamOn()
 {
-
+    if (isStreamingOn) {
+        alarm(0);
+    } else {
+        streamingPipe = popen(STREAM_COMMAND, READ);
+        isStreamingOn = true;
+    }
 }
 
 void *streamListenerThread(void *args)
 {
     while (!isStoppingSignalReceived()) {
-        // StreamingOption opt = getStreamingOption();
-        // switch (opt) {
-        //     case STREAM_OFF:
-        //         onStreamOff();
-        //         break;
-        //     case STREAM_ON:
-        //         onStreamOn();
-        //         break;
-        //     case STREAM_TRIGGER:
-        //         onStreamTrigger();
-        //         break;
-        //     default:
-        //         assert(false);
-        // }
-        onStreamTrigger();
+        if (isStreamingOptionChanged()) {
+            StreamingOption opt = getStreamingOption();
+            switch (opt) {
+                case STREAM_OFF:
+                    onStreamOff();
+                    break;
+                case STREAM_ON:
+                    onStreamOn();
+                    break;
+                case STREAM_TRIGGER:
+                    onStreamTrigger();
+                    break;
+                default:
+                    assert(false);
+            }
+        }
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
     }
 
@@ -152,6 +192,10 @@ void Stream_Controller_start(void) {
 void Stream_Controller_setStreamingOption(StreamingOption opt)
 {
     setStreamingOption(opt);
+}
+StreamingOption Stream_Controller_getStreamingOption(void)
+{
+    return getStreamingOption();
 }
 
 void Stream_Controller_stop(void) {

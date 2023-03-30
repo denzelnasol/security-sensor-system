@@ -15,6 +15,7 @@
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../MotionSensor/motionSensor.h"
 #include "../PasswordManager/passwordManager.h"
+#include "../WebCam/Stream/StreamController.h"
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -39,6 +40,7 @@
 #define DEVICE_CAMERA                           "cam"
 #define DEVICE_LOGGER                           "log"
 #define DEVICE_MOTION_SENSOR                    "pir"
+#define DEVICE_STREAM_TRIGGER                   "trigger"
 
 #define DANGER_THRESHOLD_MIN                    0
 #define DANGER_THRESHOLD_MAX                    99
@@ -123,15 +125,21 @@ static void toggle(char *response)
             "\t-" DEVICE_MOTION_SENSOR "\n"
             "\t-" DEVICE_CAMERA "\n"
             "\t-" DEVICE_LOGGER "\n"
+            "\t-" DEVICE_STREAM_TRIGGER "\n"
         );
         return;
     }
 
     bool isOn = false;
     if (strncmp(nextArg, DEVICE_CAMERA, sizeof(DEVICE_CAMERA)) == 0) {
-        // camera.toggle();
-        snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
-
+        StreamingOption opt = Stream_Controller_getStreamingOption();
+        if (opt == STREAM_TRIGGER) {
+            snprintf(response, RESPONSE_PACKET_SIZE, "camera is set to trigger. Cannot be toggled");
+        } else {
+            isOn = (opt == STREAM_OFF);
+            Stream_Controller_setStreamingOption(isOn ? STREAM_ON : STREAM_OFF);
+            snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
+        }
     } else if (strncmp(nextArg, DEVICE_LOGGER, sizeof(DEVICE_LOGGER)) == 0) {
         isOn = Logger_toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "logger now is %s\n", isOn ? "on": "off");
@@ -140,6 +148,12 @@ static void toggle(char *response)
         isOn = MotionSensor_toggle();
         snprintf(response, RESPONSE_PACKET_SIZE, "motion sensor now is %s\n", isOn ? "on": "off");
 
+    } else if (strncmp(nextArg, DEVICE_STREAM_TRIGGER, sizeof(DEVICE_STREAM_TRIGGER)) == 0) {
+        StreamingOption opt = Stream_Controller_getStreamingOption();
+        isOn = (opt != STREAM_TRIGGER);
+        Stream_Controller_setStreamingOption(isOn ? STREAM_TRIGGER : STREAM_OFF);
+        snprintf(response, RESPONSE_PACKET_SIZE, "streaming is now %s\n", isOn ? "on": "off");
+
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, 
             "Unrecognized device: '%s'\n"
@@ -147,7 +161,8 @@ static void toggle(char *response)
             "Available devices:\n"
             "\t-" DEVICE_MOTION_SENSOR "\n"
             "\t-" DEVICE_CAMERA "\n"
-            "\t-" DEVICE_LOGGER "\n", 
+            "\t-" DEVICE_LOGGER "\n"
+            "\t-" DEVICE_STREAM_TRIGGER "\n", 
             nextArg
         );
     }
