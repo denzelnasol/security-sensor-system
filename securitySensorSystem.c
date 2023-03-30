@@ -12,7 +12,10 @@ int main(int argc, char **argv)
 
     Controller_start();
     
-    ResponseHandler_start();
+    // ResponseHandler_start();
+    while (true) {
+        
+    }
 
     Controller_stop();
 

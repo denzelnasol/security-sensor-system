@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
@@ -28,6 +29,9 @@ static bool s_stoppingSignal = false;
 
 static bool isStreamingOn = false;
 
+static StreamingOption streamingOption = STREAM_TRIGGER;
+static pthread_mutex_t s_streamingMutex = PTHREAD_MUTEX_INITIALIZER;
+
 static bool isStoppingSignalReceived()
 {
     bool received = false;
@@ -45,6 +49,24 @@ static void sendStoppingSignal()
         s_stoppingSignal = true;
     }
     pthread_mutex_unlock(&s_stoppingMutex);
+}
+static void setStreamingOption(StreamingOption opt)
+{
+    pthread_mutex_lock(&s_streamingMutex);
+    {
+        streamingOption = opt;
+    }
+    pthread_mutex_unlock(&s_streamingMutex);
+}
+static StreamingOption getStreamingOption()
+{
+    StreamingOption opt;
+    pthread_mutex_lock(&s_streamingMutex);
+    {
+        opt = streamingOption;
+    }
+    pthread_mutex_unlock(&s_streamingMutex);
+    return opt;
 }
 
 void static executeStream(int duration) {
@@ -72,20 +94,46 @@ void static executeStream(int duration) {
     }
 }
 
+static void onStreamTrigger()
+{
+    PIRState state = MotionSensor_getState();
+    if (state == PIR_DETECT && !isStreamingOn) {
+        printf("Stream Starting\n");
+        // start streaming for 15 seconds
+        executeStream(STREAM_DURATION_MS);
+        isStreamingOn = true;
+        Utilities_sleepForMs(STREAM_DURATION_MS);
+        printf("STREAM ENDING\n");
+        isStreamingOn = false;
+    }
+}
+static void onStreamOff()
+{
+
+}
+static void onStreamOn()
+{
+
+}
+
 void *streamListenerThread(void *args)
 {
     while (!isStoppingSignalReceived()) {
-        PIRState state = MotionSensor_getState();
-        if (state == PIR_DETECT && !isStreamingOn) {
-            printf("Stream Starting\n");
-            // start streaming for 15 seconds
-            executeStream(STREAM_DURATION_MS);
-            isStreamingOn = true;
-            Utilities_sleepForMs(STREAM_DURATION_MS);
-            printf("STREAM ENDING\n");
-            isStreamingOn = false;
-        }
-
+        // StreamingOption opt = getStreamingOption();
+        // switch (opt) {
+        //     case STREAM_OFF:
+        //         onStreamOff();
+        //         break;
+        //     case STREAM_ON:
+        //         onStreamOn();
+        //         break;
+        //     case STREAM_TRIGGER:
+        //         onStreamTrigger();
+        //         break;
+        //     default:
+        //         assert(false);
+        // }
+        onStreamTrigger();
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
     }
 
@@ -99,6 +147,11 @@ void Stream_Controller_start(void) {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_create(&s_streamThreadId, &attr, streamListenerThread, NULL);
+}
+
+void Stream_Controller_setStreamingOption(StreamingOption opt)
+{
+    setStreamingOption(opt);
 }
 
 void Stream_Controller_stop(void) {
