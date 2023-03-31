@@ -11,7 +11,7 @@ var sioserver = require('./lib/udp_server');
 // var sioserver = require('./lib/socketio_server');
 
 const WEBSOCKET_PORT = 8088;
-const WEBSOCKET_IP_ADDRESS = '192.168.7.1';
+const WEBSOCKET_IP_ADDRESS = '10.128.0.2';
 
 const app = express();
 

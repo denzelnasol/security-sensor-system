@@ -8,7 +8,7 @@ var udpServer;
 var fileStream;
 
 const STREAM_PORT = 8080;
-const STREAM_IP_ADDRESS = '192.168.7.1';
+const STREAM_IP_ADDRESS = '10.128.0.2';
 
 exports.listen = function(server) {
     io = new SocketIOServer(server);
