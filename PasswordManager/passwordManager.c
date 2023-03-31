@@ -13,25 +13,23 @@
 #define PASSWORD_PATH           "/var/lib/" HOST_NAME "/password.txt"
 #define MS_PASSWORD_PATH        "/var/lib/" HOST_NAME "/mssecret.txt"
 
+
 // ------------------------- PRIVATE ------------------------- //
 
 typedef struct {
     // the string is ended with 0
-    char cstring[PWMGR_PASSWORD_LIMIT];
+    char *cstring;
     size_t len;
 } string;
+
+static char remoteAdminPasswordRaw[PWMGR_PASSWORD_LIMIT];
+static char menuSystemPasswordRaw[PWMGR_MSPASSWORD_LIMIT];
 
 static string remoteAdminPassword;
 static string menuSystemPassword;
 
 static pthread_mutex_t s_passwordMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_patternMutex = PTHREAD_MUTEX_INITIALIZER;
-
-static void fromCstring(const char *cstring, string *dest)
-{
-    snprintf(dest->cstring, PWMGR_PASSWORD_LIMIT, "%s", cstring);
-    dest->len = strlen(dest->cstring);
-}
 
 static bool isPasswordCorrect(const string *correctPassword, const string *password)
 {
@@ -78,7 +76,9 @@ static bool isMenuSystemPasswordValid(const string *password)
 
 void PasswordManager_init(void)
 {
+    remoteAdminPassword.cstring = remoteAdminPasswordRaw;
     getPassword(PASSWORD_PATH, &remoteAdminPassword);
+    menuSystemPassword.cstring = menuSystemPasswordRaw;
     getPassword(MS_PASSWORD_PATH, &menuSystemPassword);
 }
 void PasswordManager_cleanup(void)
@@ -87,10 +87,11 @@ void PasswordManager_cleanup(void)
     Utilities_writeStringValueToFile(menuSystemPassword.cstring, MS_PASSWORD_PATH);
 }
 
-bool PasswordManager_isLoginPasswordCorrect(const char *password)
+bool PasswordManager_isLoginPasswordCorrect(const char *password, size_t len)
 {
     string passwordStr;
-    fromCstring(password, &passwordStr);
+    passwordStr.cstring = password;
+    passwordStr.len = len;
 
     bool res = false;
     pthread_mutex_lock(&s_passwordMutex);
@@ -100,10 +101,11 @@ bool PasswordManager_isLoginPasswordCorrect(const char *password)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_isMenuSystemPasswordCorrect(const char *password)
+bool PasswordManager_isMenuSystemPasswordCorrect(const char *password, size_t len)
 {
     string passwordStr;
-    fromCstring(password, &passwordStr);
+    passwordStr.cstring = password;
+    passwordStr.len = len;
 
     bool res = false;
     pthread_mutex_lock(&s_patternMutex);
@@ -114,10 +116,11 @@ bool PasswordManager_isMenuSystemPasswordCorrect(const char *password)
     return res;
 }
 
-bool PasswordManager_changeLoginPassword(const char *newPassword)
+bool PasswordManager_changeLoginPassword(const char *newPassword, size_t len)
 {
     string passwordStr;
-    fromCstring(newPassword, &passwordStr);
+    passwordStr.cstring = newPassword;
+    passwordStr.len = len;
 
     bool res = false;
     pthread_mutex_lock(&s_passwordMutex);
@@ -127,10 +130,11 @@ bool PasswordManager_changeLoginPassword(const char *newPassword)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_changeMenuSystemPassword(const char *newPassword)
+bool PasswordManager_changeMenuSystemPassword(const char *newPassword, size_t len)
 {
     string passwordStr;
-    fromCstring(newPassword, &passwordStr);
+    passwordStr.cstring = newPassword;
+    passwordStr.len = len;
 
     if (!isMenuSystemPasswordValid(&passwordStr)) {
         return false;
