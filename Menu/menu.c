@@ -277,11 +277,13 @@ static Signal login()
     // handle error states
     if (passwordStatus == P_INPUT_NO_MATCH) {
         // printf("incorrect password\n");
+        Logger_logInfo("attempted login on menu system");
         back(&currentState);
         return SIGNAL_CONTINUE;
     }
     if (passwordStatus == P_INPUT_TOO_LONG) {
         // printf("password too long\n");
+        Logger_logInfo("attempted login on menu system");
         back(&currentState);
         return SIGNAL_CONTINUE;
     }

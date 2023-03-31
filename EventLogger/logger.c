@@ -6,8 +6,9 @@
 #include <pthread.h>
 
 #include "logger.h"
+#include "../Share/host.h"
 
-#define LOG_PATH                "/var/log/thebbg/events.log"
+#define LOG_PATH                "/var/log/" HOST_NAME "/events.log"
 
 #define LOG_INFO                "INFO"
 #define LOG_WARNING             "WARNING"

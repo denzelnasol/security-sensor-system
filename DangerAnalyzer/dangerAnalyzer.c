@@ -12,6 +12,7 @@
 #include "../Utilities/utilities.h"
 #include "../Timer/timer.h"
 #include "../HttpRequest/http.h"
+#include "../EventLogger/logger.h"
 
 // the sleep should be about 1s because the motion sensor is debounced by the hardware for 2s
 // setting it to 1s will always catch detections
@@ -173,7 +174,7 @@ static void *mainloop(void *args)
 
         if (level > getDangerThreshold()) {
             // buzzer.soundAlarm();
-            // 
+            Logger_logWarning("danger level past threshold!!");
         }
 
         // send the data to the server
