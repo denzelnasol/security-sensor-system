@@ -4,14 +4,23 @@
 #include <stdlib.h>
 
 #include "../Joystick/joystick.h"
+// #include "../Menu/MockObjects/joystick.h"
 
-typedef struct {
-    const JoystickInput *input;
-    size_t size;
-} PInputSequence;
+typedef enum {
+    P_INPUT_CONTINUE,
+    P_INPUT_MATCH,
+    P_INPUT_NO_MATCH,
+    P_INPUT_TOO_LONG,
+} PInputState;
 
-// blocks until the joystick is pressed IN
-PInputSequence PasswordInput_getInputSequence(void);
 
+void PasswordInput_init(void);
+
+// something needs to relay the joystick input into this function
+// any invalid inputs such as joystick_none will be ignored
+// postcondition: if it returns pInputState != CONTINUE the buffer will be reset
+PInputState PasswordInput_sendNext(JoystickInput input);
+
+void PasswordInput_cleanup(void);
 
 #endif

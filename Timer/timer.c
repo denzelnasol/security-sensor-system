@@ -40,3 +40,10 @@ bool Timer_isExpired(const Timer *timer)
     return !isBefore(&tnow, &(timer->end));
 }
 
+long long Timer_timestampInMs(void)
+{
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    return spec.tv_sec * MS_PER_SECONDS + spec.tv_nsec / NS_PER_MS;
+}
+
