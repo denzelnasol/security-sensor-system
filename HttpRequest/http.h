@@ -11,7 +11,7 @@ typedef struct {
 } HttpPostData;
 
 void Http_init(void);
-void Http_post(const HttpPostData *data);
+bool Http_post(const HttpPostData *data);
 void Http_cleanup(void);
 
 #endif

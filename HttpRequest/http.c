@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <curl/curl.h>
 
 #include "http.h"
@@ -32,7 +33,7 @@ void Http_init(void)
         exit(1);
     }
 }
-void Http_post(const HttpPostData *data)
+bool Http_post(const HttpPostData *data)
 {
     curl_easy_reset(httpHandle);
 
@@ -43,10 +44,7 @@ void Http_post(const HttpPostData *data)
     curl_easy_setopt(httpHandle, CURLOPT_URL, ENDPOINT_URL);
 
     CURLcode res = curl_easy_perform(httpHandle);
-    if(res != CURLE_OK) {
-        fprintf(stderr, "curl_easy_perform() failed: %s\n",
-            curl_easy_strerror(res));
-    }
+    return res != CURLE_OK;
 }
 void Http_cleanup(void)
 {
