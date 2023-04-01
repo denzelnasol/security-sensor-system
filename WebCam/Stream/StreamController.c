@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "StreamController.h"
+#include "openbsdpopen.h"
 
 #include "../../Utilities/utilities.h"
 #include "../../MotionSensor/motionSensor.h"
@@ -29,6 +30,7 @@ static bool s_stoppingSignal = false;
 
 static bool isStreamingOn = false;
 static FILE *streamingPipe;
+static pid_t streamingPid;
 
 static bool hasStreamingOptionChanged = false;
 static pthread_mutex_t s_hasStreamingOptionChangedMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -113,10 +115,31 @@ void static executeStream(int duration) {
 }
 void static killStream(FILE *pipe)
 {
-    signal(SIGALRM, exit);
-    alarm(1);
+    // signal(SIGALRM, exit);
+    // alarm(1);
 
-    waitForStream(pipe);
+    // pid_t pid = fileno(pipe);
+
+    // kill the process
+    int status = kill(streamingPid, SIGTERM);
+    if (status == 0) {
+        printf("Process %d killed\n", pid);
+    } else {
+        printf("Failed to kill process %d\n", pid);
+    }
+
+    char buffer[BUFFER_SIZE];
+    while (!feof(pipe) && !ferror(pipe)) {
+        if (fgets(buffer, sizeof(buffer), pipe) == NULL) break;
+    }
+
+    // Get the exit code from the pipe; non-zero is an error:
+    int exitCode = WEXITSTATUS(pclose(pipe));
+    if (exitCode != 0) {
+        perror("Unable to execute command:");
+        printf(" command: %s\n", STREAM_COMMAND);
+        printf(" exit code: %d\n", exitCode);
+    }
     isStreamingOn = false;
 }
 void onAlarm(int x)
@@ -150,7 +173,7 @@ static void onStreamOn()
     if (isStreamingOn) {
         alarm(0);
     } else {
-        streamingPipe = popen(STREAM_COMMAND, READ);
+        streamingPipe = good_popen(STREAM_COMMAND, READ, &streamingPid);
         isStreamingOn = true;
     }
 }
@@ -173,6 +196,7 @@ void *streamListenerThread(void *args)
                 default:
                     assert(false);
             }
+            hasStreamingOptionChanged = false;
         }
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
     }

@@ -66,8 +66,8 @@ Admin
 │   ├── 1: Logout after 1 min of inactivity
 │   └── 2: Logout after 2 min of inactivity
 └── 10: Configure Security Policy
-    ├── 0: Enable mfa authentication on leds (restrict level: medium)
-    ├── 1: Disable mfa (restrict level: low)
+    ├── 0: Disable mfa (restrict level: low)
+    ├── 1: Enable mfa authentication on leds (restrict level: medium)
     └── 2: Disable remote access (restrict level: high)
 
 */

@@ -213,7 +213,7 @@ static void login()
     // prmpt user for mfa code
     char mfaPassword[MFA_BUFFER_SIZE];
     getInput(mfaPassword, sizeof(mfaPassword));
-    if (!mfaPatternIsValid(mfaPassword, sizeof(mfaPassword))) {
+    if (!mfaPatternIsValid(mfaPassword, strlen(mfaPassword))) {
         Logger_logInfo("gus loggedin failed");
         printf("Incorrect format of MFA code. Only 0s and 1s allowed.\n");
         return;
@@ -377,7 +377,7 @@ static void changePassword()
 static void changeJoystickPattern()
 {
     // verify identity
-    printf("Enter password: ");
+    printf("Enter login password: ");
 
     char password[PASSWORD_LENGTH];
     getPassword(password, sizeof(password));
@@ -398,7 +398,7 @@ static void changeJoystickPattern()
     printf("Enter MFA code displayed on LEDs: ");
     char mfaPassword[MFA_BUFFER_SIZE];
     getInput(mfaPassword, sizeof(mfaPassword));
-    if (!mfaPatternIsValid(mfaPassword, sizeof(mfaPassword))) {
+    if (!mfaPatternIsValid(mfaPassword, strlen(mfaPassword))) {
         printf("Incorrect format of MFA code. Only 0s and 1s allowed.\n");
         return;
     }
@@ -414,21 +414,22 @@ static void changeJoystickPattern()
 
     // finally change the pattern
     printf(
-        "\nWarning: This will affect the joystick pattern required" 
+        "\nWarning: This will affect the joystick pattern required " 
         "to login as admin on the beagle cam's menu!\n\n"
         "Instructions:\n"
         "**Pattern must only contain numbers 1 to 4 (no spaces)**\n"
+        "**Pattern is limited to %d characters!**\n"
         "UP    = 1\n"
         "RIGHT = 2\n"
         "DOWN  = 3\n"
-        "LEFT  = 4\n"
+        "LEFT  = 4\n", PASSWORD_LENGTH - 1
     );
 
     // set new pattern
     char confirmedPassword[PASSWORD_LENGTH];
     printf("Enter current pattern: ");
     getPassword(password, sizeof(password));
-    if (!patternIsValid(password, sizeof(password))) {
+    if (!patternIsValid(password, strlen(password))) {
         printf("Incorrect format of pattern.\n");
         return;
     }
@@ -513,6 +514,7 @@ static Signal execute(char *command)
 
     } else if (strncmp(cmd, COMMAND_HOST_ACCESS, sizeof(COMMAND_HOST_ACCESS)) == 0) {
         accessHost();
+        return SIGNAL_STOP;
 
     } else if (strncmp(cmd, COMMAND_DUMP_LOGS, sizeof(COMMAND_DUMP_LOGS)) == 0) {
         dumpLogs();
