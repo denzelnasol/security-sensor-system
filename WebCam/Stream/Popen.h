@@ -1,3 +1,5 @@
+// source: https://android.googlesource.com/platform/bionic/+/3884bfe9661955543ce203c60f9225bbdf33f6bb/libc/unistd/popen.c
+
 /*	$OpenBSD: popen.c,v 1.17 2005/08/08 08:05:34 espie Exp $ */
 /*
  * Copyright (c) 1988, 1993
@@ -39,80 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
-static struct pid {
-	struct pid *next;
-	FILE *fp;
-	pid_t pid;
-} *pidlist;
-extern char **environ;
-FILE *
-good_popen(const char *program, const char *type, pid_t *processId)
-{
-	struct pid * volatile cur;
-	FILE *iop;
-	int pdes[2];
-	pid_t pid;
-	char *argp[] = {"sh", "-c", NULL, NULL};
-	if ((*type != 'r' && *type != 'w') || type[1] != '\0') {
-		errno = EINVAL;
-		return (NULL);
-	}
-	if ((cur = malloc(sizeof(struct pid))) == NULL)
-		return (NULL);
-	if (pipe(pdes) < 0) {
-		free(cur);
-		return (NULL);
-	}
-	switch (pid = fork()) {
-	case -1:			/* Error. */
-		(void)close(pdes[0]);
-		(void)close(pdes[1]);
-		free(cur);
-		return (NULL);
-		/* NOTREACHED */
-	case 0:				/* Child. */
-	    {
-		struct pid *pcur;
-		/*
-		 * We fork()'d, we got our own copy of the list, no
-		 * contention.
-		 */
-		for (pcur = pidlist; pcur; pcur = pcur->next)
-			close(fileno(pcur->fp));
-		if (*type == 'r') {
-			(void) close(pdes[0]);
-			if (pdes[1] != STDOUT_FILENO) {
-				(void)dup2(pdes[1], STDOUT_FILENO);
-				(void)close(pdes[1]);
-			}
-		} else {
-			(void)close(pdes[1]);
-			if (pdes[0] != STDIN_FILENO) {
-				(void)dup2(pdes[0], STDIN_FILENO);
-				(void)close(pdes[0]);
-			}
-		}
-		argp[2] = (char *)program;
-		execve(_PATH_BSHELL, argp, environ);
-		_exit(127);
-		/* NOTREACHED */
-	    }
-	}
-	/* Parent; assume fdopen can't fail. */
-	if (*type == 'r') {
-		iop = fdopen(pdes[0], type);
-		(void)close(pdes[1]);
-	} else {
-		iop = fdopen(pdes[1], type);
-		(void)close(pdes[0]);
-	}
-	/* Link into list of file descriptors. */
-	cur->fp = iop;
-	cur->pid =  pid;
-	cur->next = pidlist;
-	pidlist = cur;
-	
-	*processId = pid;
 
-	return (iop);
-}
+FILE *
+good_popen(const char *program, const char *type, pid_t *processId);

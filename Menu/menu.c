@@ -17,6 +17,7 @@
 #include "../EventLogger/logger.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../WebCam/Stream/StreamController.h"
+#include "../WebCam/Stream/Stream.h"
 
 #define SLEEP_FREQUENCY_MS                      10
 
@@ -653,7 +654,11 @@ static void setViewToggleCamera()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = 3;
-    subMenu.selectedOpt = (int)Stream_Controller_getStreamingOption();
+    if (Stream_Controller_isTriggered()) {
+        subMenu.selectedOpt = 2;
+    } else {
+        subMenu.selectedOpt = Stream_isLive() ? 1 : 0;
+    }
 }
 static void setViewToggleLogger()
 {

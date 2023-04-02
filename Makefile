@@ -1,6 +1,6 @@
 WEBCAM = WebCam/Recorder/Recorder.c WebCam/Stream/Stream.c WebCam/Stream/StreamController.c
 MOTION = MotionSensor/motionSensor.c
-UTILITIES = Utilities/utilities.c Timer/timer.c
+UTILITIES = Utilities/utilities.c Timer/timer.c WebCam/Stream/Popen.c
 PASSWORD = PasswordInput/passwordInput.c
 JOYSTICK = Joystick/joystick.c
 

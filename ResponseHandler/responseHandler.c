@@ -16,6 +16,7 @@
 #include "../MotionSensor/motionSensor.h"
 #include "../PasswordManager/passwordManager.h"
 #include "../WebCam/Stream/StreamController.h"
+#include "../WebCam/Stream/Stream.h"
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -132,13 +133,16 @@ static void toggle(char *response)
 
     bool isOn = false;
     if (strncmp(nextArg, DEVICE_CAMERA, sizeof(DEVICE_CAMERA)) == 0) {
-        StreamingOption opt = Stream_Controller_getStreamingOption();
-        if (opt == STREAM_TRIGGER) {
+        if (Stream_Controller_isTriggered()) {
             snprintf(response, RESPONSE_PACKET_SIZE, "camera is set to trigger. Cannot be toggled");
         } else {
-            isOn = (opt == STREAM_OFF);
-            Stream_Controller_setStreamingOption(isOn ? STREAM_ON : STREAM_OFF);
-            snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
+            StreamingToggle result = Stream_toggle();
+            if (result.isOperationSucceeded) {
+                isOn = result.isActive;
+                snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
+            } else {
+                snprintf(response, RESPONSE_PACKET_SIZE, "camera is not ready. Please wait.");
+            }
         }
     } else if (strncmp(nextArg, DEVICE_LOGGER, sizeof(DEVICE_LOGGER)) == 0) {
         isOn = Logger_toggle();
@@ -149,10 +153,9 @@ static void toggle(char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, "motion sensor now is %s\n", isOn ? "on": "off");
 
     } else if (strncmp(nextArg, DEVICE_STREAM_TRIGGER, sizeof(DEVICE_STREAM_TRIGGER)) == 0) {
-        StreamingOption opt = Stream_Controller_getStreamingOption();
-        isOn = (opt != STREAM_TRIGGER);
-        Stream_Controller_setStreamingOption(isOn ? STREAM_TRIGGER : STREAM_OFF);
-        snprintf(response, RESPONSE_PACKET_SIZE, "streaming is now %s\n", isOn ? "on": "off");
+        isOn = Stream_Controller_toggle();
+        snprintf(response, RESPONSE_PACKET_SIZE, "motion sensor trigger is now %s\n", 
+            isOn ? "enabled": "disabled");
 
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, 
