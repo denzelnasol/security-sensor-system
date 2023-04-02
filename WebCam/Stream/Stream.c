@@ -77,6 +77,13 @@ void Stream_init(void)
 void Stream_cleanup(void) 
 {
     // nothing
+    while (!Timer_isExpired()) {
+        Utilities_sleepForMs(1000);
+    }
+
+    if (isCameraActive()) {
+        setCamera(false);
+    }
 }
 
 StreamingToggle Stream_toggle(void)

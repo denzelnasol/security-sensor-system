@@ -11,6 +11,7 @@
 
 #include "../../Utilities/utilities.h"
 #include "../../MotionSensor/motionSensor.h"
+#include "../../Timer/timer.h"
 
 #define STREAM_DURATION_MS  120000
 #define SLEEP_FREQUENCY_MS  10
@@ -56,7 +57,7 @@ static bool toggleStreamingOption()
     pthread_mutex_unlock(&mutex_isTriggered);
     return x;
 }
-static void isCameraTriggered()
+static bool isCameraTriggered()
 {
     bool x;
     pthread_mutex_lock(&mutex_isTriggered);
@@ -69,15 +70,24 @@ static void isCameraTriggered()
 
 void *streamListenerThread(void *args)
 {
+    Timer timer;
+    bool isLive = false;
     while (!isStoppingSignalReceived()) {
         if (isCameraTriggered()) {
             PIRState state = MotionSensor_getState();
-            if (state == PIR_DETECT) {
+            if (state == PIR_DETECT && !isLive) {
+                Timer_start(STREAM_DURATION_MS, &timer);
+                isLive = true;
+
+                // this turns the stream on if not already on
                 if (!Stream_isLive()) {
                     Stream_toggle();
                 }
-                Utilities_sleepForMs(STREAM_DURATION_MS);
+            } else if (isLive && Timer_isExpired(&timer)) {
+                isLive = false;
             }
+        } else {
+            isLive = false;
         }
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
     }
