@@ -49,8 +49,8 @@ Admin
 │   ├── 0: Off
 │   └── 1: On
 ├── 4: Toggle Camera
-│   ├── 0: Off
-│   ├── 1: On
+│   ├── 0: Off      <-- if set to trigger this will set to manual
+│   ├── 1: On       <-- if set to trigger this will set to manual
 │   └── 2: Trigger
 ├── 5: Toggle Logging
 │   ├── 0: Off
@@ -453,7 +453,13 @@ static void toggleCamera()
         return;
     }
     Logger_logInfo("camera toggled on menu system.");
-    Stream_Controller_setStreamingOption((StreamingOption)(subMenu.currentOpt));
+
+    if (Stream_Controller_isTriggered() != (subMenu.currentOpt == 2)) {
+        Stream_Controller_toggle();
+        if (Stream_isLive() != (subMenu.currentOpt == 1)) {
+            Stream_toggle();
+        }
+    }
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 // turns the logger on or off

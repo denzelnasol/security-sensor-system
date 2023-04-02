@@ -50,7 +50,7 @@ static void toggleCameraActive()
 
 void static killStream(pid_t pid)
 {
-    char *cmdEndStream[32];
+    char cmdEndStream[32];
     snprintf(cmdEndStream, sizeof(cmdEndStream), END_STREAM_COMMAND, pid);
     Utilities_runCommand(cmdEndStream);
 }
