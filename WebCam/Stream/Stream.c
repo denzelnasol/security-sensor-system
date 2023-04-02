@@ -76,8 +76,7 @@ void Stream_init(void)
 }
 void Stream_cleanup(void) 
 {
-    // nothing
-    while (!Timer_isExpired()) {
+    while (!Timer_isExpired(&timer)) {
         Utilities_sleepForMs(1000);
     }
 

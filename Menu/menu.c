@@ -454,10 +454,29 @@ static void toggleCamera()
     }
     Logger_logInfo("camera toggled on menu system.");
 
-    if (Stream_Controller_isTriggered() != (subMenu.currentOpt == 2)) {
-        Stream_Controller_toggle();
-        if (Stream_isLive() != (subMenu.currentOpt == 1)) {
-            Stream_toggle();
+    if (subMenu.currentOpt == 2) {
+        if (!Stream_Controller_isTriggered()) {
+            Stream_Controller_toggle();
+        }
+    } else {
+        if (Stream_Controller_isTriggered()) {
+            Stream_Controller_toggle();
+        }
+
+        if (subMenu.currentOpt == 0) {
+            if (Stream_isLive()) {
+                StreamingToggle result = Stream_toggle();
+                if (!result.isOperationSucceeded) {
+                    return;
+                }
+            }
+        } else {
+            if (!Stream_isLive()) {
+                StreamingToggle result = Stream_toggle();
+                if (!result.isOperationSucceeded) {
+                    return;
+                }
+            }
         }
     }
     subMenu.selectedOpt = subMenu.currentOpt;

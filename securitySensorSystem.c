@@ -13,20 +13,7 @@ int main(int argc, char **argv)
 
     Controller_start();
     
-    char buffer[32];
-
-    // ResponseHandler_start();
-    printf("on\n");
-    Stream_toggle();
-    fgets(buffer, sizeof(buffer), stdin);
-
-    printf("off\n");
-    Stream_toggle();
-    fgets(buffer, sizeof(buffer), stdin);
-
-    printf("on\n");
-    Stream_toggle();
-    fgets(buffer, sizeof(buffer), stdin);
+    ResponseHandler_start();
 
     Controller_stop();
 
