@@ -81,7 +81,7 @@ $(document).ready(function() {
           }
       });
   
-      $.get('/data', function (data, status) {
+      $.get('/client/data', function (data, status) {
           console.log('fetch');
           console.log(data);
   

@@ -14,7 +14,7 @@ function addListItem(fileName) {
 
 $(document).ready(function () {
     $.ajax({
-        url: '/recordings',
+        url: '/client/recordings',
         success: function (files) {
             for (let i = 0; i < files.length; i++) {
                 addListItem(files[i]);
