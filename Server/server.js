@@ -5,7 +5,6 @@
 var fs   = require('fs');
 var path = require('path');
 var express = require('express');
-var cors = require('cors');
 
 var analyzer = require('./lib/analyzer');
 var sioserver = require('./lib/udp_server');
@@ -16,18 +15,13 @@ const WEBSOCKET_IP_ADDRESS = '10.128.0.2';
 
 const app = express();
 
-app.use(cors({
-   	 origin:'http://34.123.31.151:8088'
-}));
-
-
 app.use(express.static('public'));
 
-app.get('/', (req, res) => {
+app.get('/client', (req, res) => {
     res.sendFile(path.join(__dirname, '/public/index.html'));
 });
 
-app.get('/recordings', function (req, res) {
+app.get('/client/recordings', function (req, res) {
     const dirPath = './recordings';
 
     fs.readdir(dirPath, function (err, files) {
@@ -39,16 +33,16 @@ app.get('/recordings', function (req, res) {
     });
 });
 
-app.get('/data', function (req, res) {
+app.get('/client/data', function (req, res) {
     res.json(analyzer.getDataPoints());
 });
-app.post('/data', function (req, res) {
+app.post('/client/data', function (req, res) {
     analyzer.addDataPoint(req.body);
     res.sendStatus(201);
 });
 
 
-app.get('/recordings/:id', function (req, res) {
+app.get('/client/recordings/:id', function (req, res) {
     const filePath = path.join(__dirname, `recordings/${req.params.id}`);
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);

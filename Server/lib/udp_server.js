@@ -24,22 +24,22 @@ exports.listen = function(server) {
 
     // Initialize socket to listen for the webcam streaming data
     udpServer = dgram.createSocket('udp4');
-    udpServer.bind(STREAM_PORT, '127.0.0.1', () => {
-	console.log('UDP Server is listening on local host')
-    });
+    udpServer.bind(STREAM_PORT);
 
     // Send the data to the web socket to relay to clients
     // and create a file recording
     udpServer.on('message', (msg, rinfo) => {
+
         if (!fileStream) {
-		console.log('message received')
+            
             fileStream = fs.createWriteStream(`recordings/${formatDate()}.mp4`);
         } else {
+
             fileStream.write(msg);
-		console.log('message recording')
         }
+
         io.emit('stream', msg);
-	});
+    });
 
     udpServer.on('close', () => {
         if (fileStream) {
