@@ -5,6 +5,7 @@
 var fs   = require('fs');
 var path = require('path');
 var express = require('express');
+const cors = require('cors');
 
 var analyzer = require('./lib/analyzer');
 var sioserver = require('./lib/udp_server');
@@ -14,6 +15,9 @@ const WEBSOCKET_PORT = 8088;
 const WEBSOCKET_IP_ADDRESS = '10.128.0.2';
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cors());
 
 app.use(express.static('public'));
 
