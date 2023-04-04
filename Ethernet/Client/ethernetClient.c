@@ -2,13 +2,13 @@
 
 #include "ethernetClient.h"
 #include "clientNet.h"
-#include "ethernet.h"
+#include "../ethernet.h"
 
-#include "../WebCam/Stream/Stream.h"
+#include "../../WebCam/Stream/Stream.h"
 
 /**
  * 
- * Module to turns camera on/off
+ * Module to turn camera on/off
  * 
 */
 
@@ -107,5 +107,5 @@ void Camera_cleanup(void)
 
 // just for testing
 int main() {
-
+    turnCameraOnRequest();
 }

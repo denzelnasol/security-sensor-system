@@ -8,9 +8,9 @@
 */
 
 #include "serverNet.h"
-#include "ethernet.h"
+#include "../ethernet.h"
 
-#include "../WebCam/Stream/Stream.h"
+#include "../../WebCam/Stream/Stream.h"
 
 
 typedef enum {
@@ -54,6 +54,9 @@ int main(void)
     Signal signal = SIGNAL_NONE;
     while (signal != SIGNAL_STOP) {
         ServerNet_receive(command);
+
+        printf("%s\n", command);
+
         signal = execute(command, response);
         ServerNet_send(response, strlen(response));
     }
