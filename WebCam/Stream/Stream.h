@@ -1,6 +1,12 @@
 #ifndef BBG_CAM_STREAMING_H_
 #define BBG_CAM_STREAMING_H_
 
+/**
+ * 
+ * Controls the camera running on bbg2
+ * 
+*/
+
 void Stream_init(void);
 void Stream_cleanup(void);
 
