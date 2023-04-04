@@ -31,13 +31,11 @@ void Controller_start(void)
     Menu_start();
     Mfa_start();
 
-    Stream_init();
     Stream_Controller_start();
 }
 void Controller_stop(void)
 {
     Stream_Controller_stop();
-    Stream_cleanup();
     
     Mfa_stop();
     Menu_stop();

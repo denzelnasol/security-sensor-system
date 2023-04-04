@@ -7,8 +7,8 @@
 #include <unistd.h>
 
 #include "StreamController.h"
-#include "Stream.h"
 
+#include "../../Ethernet/ethernetClient.h"
 #include "../../Utilities/utilities.h"
 #include "../../MotionSensor/motionSensor.h"
 #include "../../Timer/timer.h"
@@ -83,6 +83,9 @@ void *streamListenerThread(void *args)
                 if (!Stream_isLive()) {
                     Stream_toggle();
                 }
+                
+                // Camera_turnOn();
+
             } else if (isLive && Timer_isExpired(&timer)) {
                 isLive = false;
             }

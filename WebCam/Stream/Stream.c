@@ -25,47 +25,15 @@ static pid_t streamingPid;
 
 static Timer timer;
 static bool isActive = false;
-static pthread_mutex_t mutex_isActive = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t s_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // ***************************** PRIVATE ****************************** //
-
-static bool isCameraActive() 
-{
-    bool x;
-    pthread_mutex_lock(&mutex_isActive);
-    {
-        x = isActive;
-    }
-    pthread_mutex_unlock(&mutex_isActive);
-    return x;
-}
-static void toggleCameraActive() 
-{
-    pthread_mutex_lock(&mutex_isActive);
-    {
-        isActive = !isActive;
-    }
-    pthread_mutex_unlock(&mutex_isActive);
-}
 
 void static killStream(pid_t pid)
 {
     char cmdEndStream[32];
     snprintf(cmdEndStream, sizeof(cmdEndStream), END_STREAM_COMMAND, pid);
     Utilities_runCommand(cmdEndStream);
-}
-
-static void setCamera(bool enable)
-{
-    toggleCameraActive();
-
-    if (enable) {
-        Timer_start(STARTUP_DELAY_MS, &timer);
-        streamingPipe = good_popen(STREAM_COMMAND, "r", &streamingPid);
-
-    } else {
-        killStream(streamingPid);
-    }
 }
 
 // ***************************** PUBLIC ****************************** //
@@ -80,30 +48,39 @@ void Stream_cleanup(void)
         Utilities_sleepForMs(1000);
     }
 
-    if (isCameraActive()) {
-        setCamera(false);
+    if (isActive) {
+        killStream(streamingPid);
     }
 }
 
-StreamingToggle Stream_toggle(void)
+bool Stream_turnOn(void)
 {
-    StreamingToggle result;
-    bool isOn = isCameraActive();
-
-    // ignore commands
-    if (isOn && !Timer_isExpired(&timer)) {
-        result.isOperationSucceeded = false;
-        return result;
+    pthread_mutex_lock(&s_mutex);
+    {
+        isActive = true;
+        Timer_start(STARTUP_DELAY_MS, &timer);
+        streamingPipe = good_popen(STREAM_COMMAND, "r", &streamingPid);
     }
-
-    setCamera(!isOn);
-
-    result.isOperationSucceeded = true;
-    result.isActive = !isOn;
-    return result;
+    pthread_mutex_unlock(&s_mutex);
 }
-
-bool Stream_isLive(void)
+bool Stream_turnOff(void)
 {
-    return isCameraActive();
+    bool res = true;
+    pthread_mutex_lock(&s_mutex);
+    {
+        // allow the camera to terminate gracefully otherwise it will affect future streams
+        // making sure that the camera data does not get corrupted
+        if (isActive) {
+            if (!Timer_isExpired(&timer)) {
+                res = false;
+            } else {
+                isActive = false;
+                killStream(streamingPid);
+            }
+        }
+    }
+    pthread_mutex_unlock(&s_mutex);
+    return res;
 }
+
+
