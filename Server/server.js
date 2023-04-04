@@ -5,6 +5,7 @@
 var fs   = require('fs');
 var path = require('path');
 var express = require('express');
+var cors = require('cors');
 
 var analyzer = require('./lib/analyzer');
 var sioserver = require('./lib/udp_server');
@@ -14,6 +15,11 @@ const WEBSOCKET_PORT = 8088;
 const WEBSOCKET_IP_ADDRESS = '10.128.0.2';
 
 const app = express();
+
+app.use(cors({
+   	 origin:'http://34.123.31.151:8088'
+}));
+
 
 app.use(express.static('public'));
 
@@ -49,7 +55,7 @@ app.get('/recordings/:id', function (req, res) {
 });
 
 
-const server = app.listen(WEBSOCKET_PORT, WEBSOCKET_IP_ADDRESS, () => {
+const server = app.listen(WEBSOCKET_PORT, () => {
     console.log(`server listening on port ${WEBSOCKET_PORT} with address`, server.address());
 })
 
