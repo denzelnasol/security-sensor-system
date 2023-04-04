@@ -1,23 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
 
 #include "StreamController.h"
+#include "Stream.h"
 
 #include "../../Utilities/utilities.h"
 #include "../../MotionSensor/motionSensor.h"
-
-#define READ "r"
-#define WRITE "w"
-
-#define STREAM_COMMAND "./capture -F -o -c0 | ffmpeg -i pipe:0 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4000k -minrate 4000k -maxrate 4000k -bufsize 1835k -muxdelay 0.1 -framerate 30 -bf 0 udp://192.168.7.1:8080"
+#include "../../Timer/timer.h"
 
 #define STREAM_DURATION_MS  120000
 #define SLEEP_FREQUENCY_MS  10
-#define BUFFER_SIZE         1024
 
 // ------------------------- PRIVATE ------------------------- //
 
@@ -26,7 +23,9 @@ static pthread_t s_streamThreadId;
 static pthread_mutex_t s_stoppingMutex = PTHREAD_MUTEX_INITIALIZER;
 static bool s_stoppingSignal = false;
 
-static bool isStreamingOn = false;
+static bool isTriggered = false;
+static pthread_mutex_t mutex_isTriggered = PTHREAD_MUTEX_INITIALIZER;
+
 
 static bool isStoppingSignalReceived()
 {
@@ -47,45 +46,49 @@ static void sendStoppingSignal()
     pthread_mutex_unlock(&s_stoppingMutex);
 }
 
-void static executeStream(int duration) {
-    // Execute the shell command (output into pipe)
-    FILE *pipe = popen(STREAM_COMMAND, READ);
-
-    signal(SIGALRM, exit);
-    alarm(duration);
-
-    // Ignore output of the command; but consume it
-    // so we don't get an error when closing the pipe.
-    char buffer[BUFFER_SIZE];
-    while (!feof(pipe) && !ferror(pipe)) {
-        if (fgets(buffer, sizeof(buffer), pipe) == NULL) break;
+static bool toggleStreamingOption()
+{
+    bool x;
+    pthread_mutex_lock(&mutex_isTriggered);
+    {
+        isTriggered = !isTriggered;
+        x = isTriggered;
     }
-
-    alarm(0);
-
-    // Get the exit code from the pipe; non-zero is an error:
-    int exitCode = WEXITSTATUS(pclose(pipe));
-    if (exitCode != 0) {
-        perror("Unable to execute command:");
-        printf(" command: %s\n", STREAM_COMMAND);
-        printf(" exit code: %d\n", exitCode);
+    pthread_mutex_unlock(&mutex_isTriggered);
+    return x;
+}
+static bool isCameraTriggered()
+{
+    bool x;
+    pthread_mutex_lock(&mutex_isTriggered);
+    {
+        x = isTriggered;
     }
+    pthread_mutex_unlock(&mutex_isTriggered); 
+    return x;
 }
 
 void *streamListenerThread(void *args)
 {
+    Timer timer;
+    bool isLive = false;
     while (!isStoppingSignalReceived()) {
-        PIRState state = MotionSensor_getState();
-        if (state == PIR_DETECT && !isStreamingOn) {
-            printf("Stream Starting\n");
-            // start streaming for 15 seconds
-            executeStream(STREAM_DURATION_MS);
-            isStreamingOn = true;
-            Utilities_sleepForMs(STREAM_DURATION_MS);
-            printf("STREAM ENDING\n");
-            isStreamingOn = false;
-        }
+        if (isCameraTriggered()) {
+            PIRState state = MotionSensor_getState();
+            if (state == PIR_DETECT && !isLive) {
+                Timer_start(STREAM_DURATION_MS, &timer);
+                isLive = true;
 
+                // this turns the stream on if not already on
+                if (!Stream_isLive()) {
+                    Stream_toggle();
+                }
+            } else if (isLive && Timer_isExpired(&timer)) {
+                isLive = false;
+            }
+        } else {
+            isLive = false;
+        }
         Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
     }
 
@@ -100,6 +103,18 @@ void Stream_Controller_start(void) {
     pthread_attr_init(&attr);
     pthread_create(&s_streamThreadId, &attr, streamListenerThread, NULL);
 }
+
+bool Stream_Controller_toggle(void)
+{
+    return toggleStreamingOption();
+}
+
+// returns true if the camera is currently set to triggered otherwise false
+bool Stream_Controller_isTriggered(void)
+{
+    return isCameraTriggered();
+}
+
 
 void Stream_Controller_stop(void) {
     sendStoppingSignal();

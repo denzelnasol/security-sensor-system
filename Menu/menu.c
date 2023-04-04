@@ -16,6 +16,8 @@
 #include "../Settings/settings.h"
 #include "../EventLogger/logger.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
+#include "../WebCam/Stream/StreamController.h"
+#include "../WebCam/Stream/Stream.h"
 
 #define SLEEP_FREQUENCY_MS                      10
 
@@ -47,8 +49,9 @@ Admin
 │   ├── 0: Off
 │   └── 1: On
 ├── 4: Toggle Camera
-│   ├── 0: Off
-│   └── 1: On
+│   ├── 0: Off      <-- if set to trigger this will set to manual
+│   ├── 1: On       <-- if set to trigger this will set to manual
+│   └── 2: Trigger
 ├── 5: Toggle Logging
 │   ├── 0: Off
 │   └── 1: On
@@ -64,8 +67,8 @@ Admin
 │   ├── 1: Logout after 1 min of inactivity
 │   └── 2: Logout after 2 min of inactivity
 └── 10: Configure Security Policy
-    ├── 0: Enable mfa authentication on leds (restrict level: medium)
-    ├── 1: Disable mfa (restrict level: low)
+    ├── 0: Disable mfa (restrict level: low)
+    ├── 1: Enable mfa authentication on leds (restrict level: medium)
     └── 2: Disable remote access (restrict level: high)
 
 */
@@ -442,16 +445,40 @@ static void toggleMotionSensor()
     }
     subMenu.selectedOpt = subMenu.currentOpt;
 }
+
 // turns the camera on or off
 static void toggleCamera()
 {
-    // todo
-    // CamToggle val = CAM_OFF;
-    if (subMenu.currentOpt == (int)ACTION_TOGGLE_ON_OR_CONFIRM) {
-        // val = CAM_ON;
-        Logger_logInfo("camera toggled on menu system.");
+    if (subMenu.currentOpt == subMenu.selectedOpt) {
+        return;
     }
-    // camController.toggle(val);
+    Logger_logInfo("camera toggled on menu system.");
+
+    if (subMenu.currentOpt == 2) {
+        if (!Stream_Controller_isTriggered()) {
+            Stream_Controller_toggle();
+        }
+    } else {
+        if (Stream_Controller_isTriggered()) {
+            Stream_Controller_toggle();
+        }
+
+        if (subMenu.currentOpt == 0) {
+            if (Stream_isLive()) {
+                StreamingToggle result = Stream_toggle();
+                if (!result.isOperationSucceeded) {
+                    return;
+                }
+            }
+        } else {
+            if (!Stream_isLive()) {
+                StreamingToggle result = Stream_toggle();
+                if (!result.isOperationSucceeded) {
+                    return;
+                }
+            }
+        }
+    }
     subMenu.selectedOpt = subMenu.currentOpt;
 }
 // turns the logger on or off
@@ -651,9 +678,12 @@ static void setViewToggleMotionSensor()
 static void setViewToggleCamera()
 {
     subMenu.currentOpt = 0;
-    subMenu.numOpts = (int)ACTION_TOGGLE_SENTINEL_MAX;
-    // todo
-    // subMenu.selectedOpt = (int)camera.getToggleState();
+    subMenu.numOpts = 3;
+    if (Stream_Controller_isTriggered()) {
+        subMenu.selectedOpt = 2;
+    } else {
+        subMenu.selectedOpt = Stream_isLive() ? 1 : 0;
+    }
 }
 static void setViewToggleLogger()
 {
