@@ -1,6 +1,7 @@
 var dgram = require('dgram');
 var fs = require('fs');
 var SocketIOServer = require('socket.io').Server;
+const cors = require('cors');
 var io;
 var udpServer;
 
@@ -11,7 +12,11 @@ const STREAM_PORT = 8080;
 //const STREAM_IP_ADDRESS = '34.123.31.151';
 
 exports.listen = function(server) {
-    io = new SocketIOServer(server)
+    io = new SocketIOServer(server, {
+        cors: {
+            origin: '*',
+        }
+    });
 
     io.sockets.on('connection', (socket) => {
         console.log('A client has connected');
