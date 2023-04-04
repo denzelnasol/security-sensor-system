@@ -50,7 +50,7 @@ void ServerNet_receive(char *message) {
 }
 
 
-// sends everything in message to host
+// sends everything in message to client
 void ServerNet_send(const char *message, int numBytes) {
     sendto(
         socketDescriptor, 
