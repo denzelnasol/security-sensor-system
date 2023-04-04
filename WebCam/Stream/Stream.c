@@ -62,6 +62,7 @@ bool Stream_turnOn(void)
         streamingPipe = good_popen(STREAM_COMMAND, "r", &streamingPid);
     }
     pthread_mutex_unlock(&s_mutex);
+    return true;
 }
 bool Stream_turnOff(void)
 {

@@ -13,6 +13,7 @@
 #include "../../MotionSensor/motionSensor.h"
 #include "../../Timer/timer.h"
 
+// leave camera on for 2min 
 #define STREAM_DURATION_MS  120000
 #define SLEEP_FREQUENCY_MS  10
 
@@ -79,12 +80,8 @@ void *streamListenerThread(void *args)
                 Timer_start(STREAM_DURATION_MS, &timer);
                 isLive = true;
 
-                // this turns the stream on if not already on
-                if (!Stream_isLive()) {
-                    Stream_toggle();
-                }
-                
-                // Camera_turnOn();
+                // this turns the stream on if not already on                
+                Camera_turnOn();
 
             } else if (isLive && Timer_isExpired(&timer)) {
                 isLive = false;
@@ -112,8 +109,17 @@ bool Stream_Controller_toggle(void)
     return toggleStreamingOption();
 }
 
+void Stream_Controller_setAuto(bool isAuto)
+{
+    pthread_mutex_lock(&mutex_isTriggered);
+    {
+        isTriggered = isAuto;
+    }
+    pthread_mutex_unlock(&mutex_isTriggered); 
+}
+
 // returns true if the camera is currently set to triggered otherwise false
-bool Stream_Controller_isTriggered(void)
+bool Stream_Controller_isAuto(void)
 {
     return isCameraTriggered();
 }

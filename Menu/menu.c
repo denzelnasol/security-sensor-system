@@ -17,7 +17,7 @@
 #include "../EventLogger/logger.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../WebCam/Stream/StreamController.h"
-#include "../WebCam/Stream/Stream.h"
+#include "../Ethernet/ethernetClient.h"
 
 #define SLEEP_FREQUENCY_MS                      10
 
@@ -455,27 +455,20 @@ static void toggleCamera()
     Logger_logInfo("camera toggled on menu system.");
 
     if (subMenu.currentOpt == 2) {
-        if (!Stream_Controller_isTriggered()) {
-            Stream_Controller_toggle();
-        }
+        Stream_Controller_setAuto(true);
+
     } else {
-        if (Stream_Controller_isTriggered()) {
-            Stream_Controller_toggle();
+        if (Stream_Controller_isAuto()) {
+            Stream_Controller_setAuto(false);
         }
 
         if (subMenu.currentOpt == 0) {
-            if (Stream_isLive()) {
-                StreamingToggle result = Stream_toggle();
-                if (!result.isOperationSucceeded) {
-                    return;
-                }
+            if (!Camera_turnOff()) {
+                return;
             }
         } else {
-            if (!Stream_isLive()) {
-                StreamingToggle result = Stream_toggle();
-                if (!result.isOperationSucceeded) {
-                    return;
-                }
+            if (!Camera_turnOn()) {
+                return;
             }
         }
     }
@@ -679,10 +672,10 @@ static void setViewToggleCamera()
 {
     subMenu.currentOpt = 0;
     subMenu.numOpts = 3;
-    if (Stream_Controller_isTriggered()) {
+    if (Stream_Controller_isAuto()) {
         subMenu.selectedOpt = 2;
     } else {
-        subMenu.selectedOpt = Stream_isLive() ? 1 : 0;
+        subMenu.selectedOpt = Camera_isLive() ? 1 : 0;
     }
 }
 static void setViewToggleLogger()
