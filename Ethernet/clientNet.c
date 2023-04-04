@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,8 +23,8 @@ void ClientNet_init(void) {
     struct sockaddr_in sin;
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
-    inet_pton(AF_INET, ETHERNET_HOST_ADDR, &(sin.sin_addr));
-    sin.sin_port = htons(ETHERNET_HOST_PORT);
+    inet_pton(AF_INET, ETH_HOST_ADDR, &(sin.sin_addr));
+    sin.sin_port = htons(ETH_HOST_PORT);
 
     socketDescriptor = socket(PF_INET, SOCK_DGRAM, 0);
     if (socketDescriptor == -1) {
@@ -79,12 +80,12 @@ void ClientNet_cleanup(void) {
 }
 
 
-int main(void) {
-    ClientNet_init();
+// int main(void) {
+//     ClientNet_init();
 
-    char *str = "hello from client";
-    ClientNet_send(str, sizeof(str));
+//     char *str = "hello from client";
+//     ClientNet_send(str, sizeof(str));
 
 
-    ClientNet_cleanup();
-}
+//     ClientNet_cleanup();
+// }

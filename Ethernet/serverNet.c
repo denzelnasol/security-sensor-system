@@ -9,13 +9,12 @@
 
 #include "serverNet.h"
 #include "ethernet.h"
-
+ 
 // ------------------------- PRIVATE ------------------------- //
 static int socketDescriptor = 0;
 static struct sockaddr_in sinRemote;
 
 // ------------------------- PUBLIC ------------------------- //
-
 void ServerNet_init(void) {
     struct sockaddr_in sin;
     memset(&sin, 0, sizeof(sin));
@@ -68,14 +67,14 @@ void ServerNet_cleanup(void) {
 }
 
 
-int main(void) {
-    ServerNet_init();
+// int main(void) {
+//     ServerNet_init();
 
-    printf("server started.\n");
+//     printf("server started.\n");
 
-    char message[ETH_PACKET_SIZE];
-    ServerNet_receive(message);
-    printf("recved: %s\n", message);
+//     char message[ETH_PACKET_SIZE];
+//     ServerNet_receive(message);
+//     printf("recved: %s\n", message);
 
-    ServerNet_cleanup();
-}
+//     ServerNet_cleanup();
+// }

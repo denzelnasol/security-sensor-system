@@ -8,7 +8,7 @@
 
 /**
  * 
- * Turns camera on or off
+ * Module to turns camera on/off
  * 
 */
 
@@ -18,33 +18,35 @@ static void setCamera(bool enabled)
 {
     isCameraOn = enabled;
 }
+
 static bool isCameraActive()
 {
     return isCameraOn;
 }
+
 static bool turnCameraOnRequest()
 {
     ClientNet_send(ETH_REQ_CAM_ON, sizeof(ETH_REQ_CAM_ON));
 
     char buffer[ETH_PACKET_SIZE];
-    bool res = ClientNet_receive(buffer);
-    if (!res) {
+    if (!ClientNet_receive(buffer)) {
         return false;
     }
+
     return strncmp(buffer, ETH_RESPONSE_OK, sizeof(ETH_RESPONSE_OK)) == 0;
 }
+
 static bool turnCameraOffRequest()
 {
     ClientNet_send(ETH_REQ_CAM_OFF, sizeof(ETH_REQ_CAM_OFF));
 
     char buffer[ETH_PACKET_SIZE];
-    bool res = ClientNet_receive(buffer);
-    if (!res) {
+    if (!ClientNet_receive(buffer)) {
         return false;
     }
+
     return strncmp(buffer, ETH_RESPONSE_OK, sizeof(ETH_RESPONSE_OK)) == 0;
 }
-
 
 void Camera_init(void)
 {
@@ -101,4 +103,9 @@ void Camera_cleanup(void)
 {
     ClientNet_send(ETH_REQ_STOP, sizeof(ETH_REQ_STOP));
     ClientNet_cleanup();
+}
+
+// just for testing
+int main() {
+
 }
