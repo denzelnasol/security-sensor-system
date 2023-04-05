@@ -17,7 +17,7 @@
 #include "../EventLogger/logger.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../WebCam/Stream/StreamController.h"
-#include "../Ethernet/ethernetClient.h"
+#include "../Ethernet/Client/ethernetClient.h"
 
 #define SLEEP_FREQUENCY_MS                      10
 

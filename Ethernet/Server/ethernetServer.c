@@ -54,9 +54,6 @@ int main(void)
     Signal signal = SIGNAL_NONE;
     while (signal != SIGNAL_STOP) {
         ServerNet_receive(command);
-
-        printf("%s\n", command);
-
         signal = execute(command, response);
         ServerNet_send(response, strlen(response));
     }

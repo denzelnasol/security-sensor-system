@@ -8,7 +8,7 @@
 
 #include "StreamController.h"
 
-#include "../../Ethernet/ethernetClient.h"
+#include "../../Ethernet/Client/ethernetClient.h"
 #include "../../Utilities/utilities.h"
 #include "../../MotionSensor/motionSensor.h"
 #include "../../Timer/timer.h"

@@ -12,6 +12,7 @@
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../WebCam/Stream/StreamController.h"
 #include "../WebCam/Stream/Stream.h"
+#include "../Ethernet/Client/ethernetClient.h"
 
 void Controller_start(void)
 {
@@ -32,9 +33,11 @@ void Controller_start(void)
     Mfa_start();
 
     Stream_Controller_start();
+    Camera_init();
 }
 void Controller_stop(void)
 {
+    Camera_cleanup();
     Stream_Controller_stop();
     
     Mfa_stop();
