@@ -36,7 +36,7 @@ class JSMpegWritableSource {
       }
 }
 
-const socket = io.connect('http://192.168.7.1:8088');
+const socket = io.connect('http://34.123.31.151');
 
 const canvas = $("#self-view")[0];
 
