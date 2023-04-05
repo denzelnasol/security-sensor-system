@@ -36,7 +36,9 @@ app.get('/recordings', function (req, res) {
 });
 
 app.get('/data', function (req, res) {
-    res.json(analyzer.getDataPoints());
+    let data = analyzer.getDataPoints();
+    let threshold = req.body.dangerThreshold;
+    res.json({ ...data, dangerThreshold: threshold });
 });
 app.post('/data', function (req, res) {
     analyzer.addDataPoint(req.body);

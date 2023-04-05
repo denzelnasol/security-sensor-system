@@ -172,7 +172,8 @@ static void *mainloop(void *args)
         level = computeNewDangerLevel(level);
         setDangerLevel(level);
 
-        if (level > getDangerThreshold()) {
+        double thresh = getDangerThreshold();
+        if (level > thresh) {
             // buzzer.soundAlarm();
             Logger_logWarning("danger level past threshold!!");
         }
@@ -180,6 +181,7 @@ static void *mainloop(void *args)
         // send the data to the server
         HttpPostData postData;
         postData.dangerLevel = level;
+        postData.dangerThreshold = thresh;
         Http_post(&postData);
 
         Utilities_sleepForMs(SLEEP_MS);

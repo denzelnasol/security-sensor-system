@@ -40,7 +40,8 @@ bool Http_post(const HttpPostData *data)
     curl_easy_reset(httpHandle);
 
     char buff[POST_BUFFER_SIZE];
-    snprintf(buff, sizeof(buff), "dangerLevel=%f", data->dangerLevel);
+    snprintf(buff, sizeof(buff), "dangerLevel=%f&dangerThreshold=%f", 
+        data->dangerLevel, data->dangerThreshold);
     curl_easy_setopt(httpHandle, CURLOPT_WRITEFUNCTION, write_data);
     curl_easy_setopt(httpHandle, CURLOPT_POSTFIELDS, buff);
     curl_easy_setopt(httpHandle, CURLOPT_URL, ENDPOINT_URL);

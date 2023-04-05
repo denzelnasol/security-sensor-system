@@ -8,6 +8,7 @@
 
 typedef struct {
     double dangerLevel;
+    double dangerThreshold;
 } HttpPostData;
 
 void Http_init(void);

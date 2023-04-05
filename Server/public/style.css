@@ -65,6 +65,10 @@ body {
     margin: 10px;
 }
 
+.dangerIcon {
+    color: #dc3545;
+}
+
 #leftPanel {
     display: flex;
     flex-direction: column;
