@@ -47,7 +47,7 @@ static bool isPasswordValid()
 {
     char buffer[PWMGR_MSPASSWORD_LIMIT];
     sequenceToString(&sequence, buffer);
-    return PasswordManager_isMenuSystemPasswordCorrect(buffer);
+    return PasswordManager_isMenuSystemPasswordCorrect(buffer, sequence.size);
 }
 
 static bool Sequence_isFull(const Sequence *seq)
