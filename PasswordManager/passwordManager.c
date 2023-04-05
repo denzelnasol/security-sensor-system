@@ -27,7 +27,7 @@ static string menuSystemPassword;
 static pthread_mutex_t s_passwordMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t s_patternMutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void fromCstring(const char *cstring, string *dest)
+static void fromCstring(char *cstring, string *dest)
 {
     snprintf(dest->cstring, PWMGR_PASSWORD_LIMIT, "%s", cstring);
     dest->len = strlen(dest->cstring);
@@ -87,7 +87,7 @@ void PasswordManager_cleanup(void)
     Utilities_writeStringValueToFile(menuSystemPassword.cstring, MS_PASSWORD_PATH);
 }
 
-bool PasswordManager_isLoginPasswordCorrect(const char *password)
+bool PasswordManager_isLoginPasswordCorrect(char *password)
 {
     string passwordStr;
     fromCstring(password, &passwordStr);
@@ -100,7 +100,7 @@ bool PasswordManager_isLoginPasswordCorrect(const char *password)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_isMenuSystemPasswordCorrect(const char *password)
+bool PasswordManager_isMenuSystemPasswordCorrect(char *password)
 {
     string passwordStr;
     fromCstring(password, &passwordStr);
@@ -114,7 +114,7 @@ bool PasswordManager_isMenuSystemPasswordCorrect(const char *password)
     return res;
 }
 
-bool PasswordManager_changeLoginPassword(const char *newPassword)
+bool PasswordManager_changeLoginPassword(char *newPassword)
 {
     string passwordStr;
     fromCstring(newPassword, &passwordStr);
@@ -127,7 +127,7 @@ bool PasswordManager_changeLoginPassword(const char *newPassword)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_changeMenuSystemPassword(const char *newPassword)
+bool PasswordManager_changeMenuSystemPassword(char *newPassword)
 {
     string passwordStr;
     fromCstring(newPassword, &passwordStr);

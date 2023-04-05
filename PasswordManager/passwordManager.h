@@ -13,10 +13,10 @@ void PasswordManager_cleanup(void);
 // all passwords need to be < PWMGR_PASSWORD_LIMIT
 // all menu system passwords need to by < PWMGR_MSPASSWORD_LIMIT
 
-bool PasswordManager_isLoginPasswordCorrect(const char *password);
-bool PasswordManager_isMenuSystemPasswordCorrect(const char *password);
+bool PasswordManager_isLoginPasswordCorrect(char *password);
+bool PasswordManager_isMenuSystemPasswordCorrect(char *password);
 
-bool PasswordManager_changeLoginPassword(const char *newPassword);
-bool PasswordManager_changeMenuSystemPassword(const char *newPassword);
+bool PasswordManager_changeLoginPassword(char *newPassword);
+bool PasswordManager_changeMenuSystemPassword(char *newPassword);
 
 #endif
