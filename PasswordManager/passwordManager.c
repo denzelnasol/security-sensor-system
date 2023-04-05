@@ -87,7 +87,7 @@ void PasswordManager_cleanup(void)
     Utilities_writeStringValueToFile(menuSystemPassword.cstring, MS_PASSWORD_PATH);
 }
 
-bool PasswordManager_isLoginPasswordCorrect(const char *password, size_t len)
+bool PasswordManager_isLoginPasswordCorrect(char *password, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = password;
@@ -101,7 +101,7 @@ bool PasswordManager_isLoginPasswordCorrect(const char *password, size_t len)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_isMenuSystemPasswordCorrect(const char *password, size_t len)
+bool PasswordManager_isMenuSystemPasswordCorrect(char *password, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = password;
@@ -116,7 +116,7 @@ bool PasswordManager_isMenuSystemPasswordCorrect(const char *password, size_t le
     return res;
 }
 
-bool PasswordManager_changeLoginPassword(const char *newPassword, size_t len)
+bool PasswordManager_changeLoginPassword(char *newPassword, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = newPassword;
@@ -130,7 +130,7 @@ bool PasswordManager_changeLoginPassword(const char *newPassword, size_t len)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_changeMenuSystemPassword(const char *newPassword, size_t len)
+bool PasswordManager_changeMenuSystemPassword(char *newPassword, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = newPassword;

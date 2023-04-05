@@ -29,7 +29,7 @@ CFLAGS = -Wall -g -std=c99 -D _POSIX_C_SOURCE=200809L -Wshadow # TEMPORARY: Repl
 
 LFLAGS = -L$(HOME)/cmpt433/public/curl_lib_BBB/lib/libs
 
-all: bbg sshclient
+all: bbg sshclient ethcamera
 
 bbg:
 	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread -lcurl
@@ -42,6 +42,9 @@ bbg:
 
 sshclient:
 	@make --directory=RemoteLoginClient
+
+ethcamera:
+	@make --directory=Ethernet
 
 src:
 	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread

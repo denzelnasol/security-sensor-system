@@ -16,7 +16,7 @@
 #include "../MotionSensor/motionSensor.h"
 #include "../PasswordManager/passwordManager.h"
 #include "../WebCam/Stream/StreamController.h"
-#include "../WebCam/Stream/Stream.h"
+#include "../Ethernet/Client/ethernetClient.h"
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -133,12 +133,11 @@ static void toggle(char *response)
 
     bool isOn = false;
     if (strncmp(nextArg, DEVICE_CAMERA, sizeof(DEVICE_CAMERA)) == 0) {
-        if (Stream_Controller_isTriggered()) {
+        if (Stream_Controller_isAuto()) {
             snprintf(response, RESPONSE_PACKET_SIZE, "camera is set to trigger. Cannot be toggled");
         } else {
-            StreamingToggle result = Stream_toggle();
-            if (result.isOperationSucceeded) {
-                isOn = result.isActive;
+            if (Camera_toggle()) {
+                isOn = Camera_isLive();
                 snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
             } else {
                 snprintf(response, RESPONSE_PACKET_SIZE, "camera is not ready. Please wait.");

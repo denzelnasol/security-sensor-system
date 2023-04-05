@@ -1,19 +1,22 @@
 #ifndef BBG_CAM_STREAMING_H_
 #define BBG_CAM_STREAMING_H_
 
-typedef struct {
-    bool isActive;
-    bool isOperationSucceeded;
-} StreamingToggle;
-
+/**
+ * 
+ * Controls the camera running on bbg2
+ * 
+*/
 
 void Stream_init(void);
 void Stream_cleanup(void);
 
 // toggle on or off
-StreamingToggle Stream_toggle(void);
+bool Stream_toggle(void);
 
-// returns true if the camera is on false otherwise
-bool Stream_isLive(void);
+// precondition: if the stream is not on
+bool Stream_turnOn(void);
+
+// precondition: if the stream is not off
+bool Stream_turnOff(void);
 
 #endif

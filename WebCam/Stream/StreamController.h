@@ -20,8 +20,11 @@ void Stream_Controller_start(void);
 // toggles the stream controller to be on trigger or manual. returns true if its triggered false otherwise
 bool Stream_Controller_toggle(void);
 
+// sets the stream to be triggered by motion sensor if isAuto is true
+void Stream_Controller_setAuto(bool isAuto);
+
 // returns true if the camera is currently set to triggered otherwise false
-bool Stream_Controller_isTriggered(void);
+bool Stream_Controller_isAuto(void);
 
 // stop the controller thread and cleanup any resources
 void Stream_Controller_stop(void);

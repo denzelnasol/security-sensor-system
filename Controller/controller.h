@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_H_
-#define CONTROLLER_H_
+#ifndef MAIN_CONTROLLER_H_
+#define MAIN_CONTROLLER_H_
 
 void Controller_start(void);
 void Controller_stop(void);
