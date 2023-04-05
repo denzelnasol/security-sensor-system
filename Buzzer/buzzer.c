@@ -20,10 +20,7 @@ typedef struct {
 } BuzzerSettings;
 
 static pthread_mutex_t s_buzzerMutex = PTHREAD_MUTEX_INITIALIZER;
-
 static bool isActive = false;
-static pthread_mutex_t alarmMutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 // ------------------------- PRIVATE ------------------------- //
 
@@ -86,21 +83,4 @@ void Buzzer_stopAlarm()
 void Buzzer_cleanup() 
 {
     Buzzer_stopAlarm();
-}
-
-int main(void)
-{
-    Buzzer_init();
-
-    char buffer[32];
-    fgets(buffer, sizeof(buffer), stdin);
-    Buzzer_alarm();
-    fgets(buffer, sizeof(buffer), stdin);
-    Buzzer_stopAlarm();
-    fgets(buffer, sizeof(buffer), stdin);
-    Buzzer_alarm();
-    fgets(buffer, sizeof(buffer), stdin);
-
-    Buzzer_cleanup();
-    return 0;
 }
