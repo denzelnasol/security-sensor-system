@@ -83,7 +83,24 @@ void Buzzer_stopAlarm()
     }
 }
 
-void Buzzer_stop() 
+void Buzzer_cleanup() 
 {
     Buzzer_stopAlarm();
+}
+
+int main(void)
+{
+    Buzzer_init();
+
+    char buffer[32];
+    fgets(buffer, sizeof(buffer), stdin);
+    Buzzer_alarm();
+    fgets(buffer, sizeof(buffer), stdin);
+    Buzzer_stopAlarm();
+    fgets(buffer, sizeof(buffer), stdin);
+    Buzzer_alarm();
+    fgets(buffer, sizeof(buffer), stdin);
+
+    Buzzer_cleanup();
+    return 0;
 }

@@ -3,14 +3,11 @@
 #ifndef BUZZER_H
 #define BUZZER_H
 
-void Buzzer_start(void);
+void Buzzer_init(void);
 
-// Play hit noise
-void Buzzer_playHit(void);
+void Buzzer_alarm(void);
+void Buzzer_stopAlarm(void);
 
-// Play miss noise
-void Buzzer_playMiss(void);
-
-void Buzzer_stop(void);
+void Buzzer_cleanup(void);
 
 #endif
