@@ -42,6 +42,7 @@ void Stream_init(void)
 {
     // nothing
 }
+
 void Stream_cleanup(void) 
 {
     while (!Timer_isExpired(&timer)) {
@@ -64,6 +65,7 @@ bool Stream_turnOn(void)
     pthread_mutex_unlock(&s_mutex);
     return true;
 }
+
 bool Stream_turnOff(void)
 {
     bool res = true;
