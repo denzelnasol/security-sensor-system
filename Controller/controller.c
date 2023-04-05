@@ -12,6 +12,7 @@
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../WebCam/Stream/StreamController.h"
 #include "../Ethernet/Client/ethernetClient.h"
+#include "../Buzzer/buzzer.h"
 
 void Controller_start(void)
 {
@@ -23,6 +24,7 @@ void Controller_start(void)
     Joystick_init();
     MotionSensor_init();
     PasswordInput_init();
+    Buzzer_init();
     
     // start threads
     LedDisplay_start();
@@ -45,6 +47,7 @@ void Controller_stop(void)
     DangerAnalyzer_stop();
     LedDisplay_stop();
 
+    Buzzer_cleanup();
     PasswordInput_cleanup();
     MotionSensor_cleanup();
     Joystick_cleanup();
