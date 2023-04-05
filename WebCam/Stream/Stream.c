@@ -11,8 +11,13 @@
 
 #include "../../Utilities/utilities.h"
 #include "../../Timer/timer.h"
+#include "../../Share/host.h"
 
-#define STREAM_COMMAND      "./capture -F -o -c0 | ffmpeg -i pipe:0 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4000k -minrate 4000k -maxrate 4000k -bufsize 1835k -muxdelay 0.1 -framerate 30 -bf 0 udp://192.168.7.1:8080"
+#define STREAM_COMMAND      "./capture -F -o -c0 | "
+                            "ffmpeg -i pipe:0 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 4000k "
+                            "-minrate 4000k -maxrate 4000k -bufsize 1835k -muxdelay 0.1 -framerate 30 "
+                            "-bf 0 udp://" CLOUD_ADDR ":8080"
+
 #define END_STREAM_COMMAND  "pkill -P %d"
 
 #define BUFFER_SIZE         1024

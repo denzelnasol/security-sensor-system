@@ -11,7 +11,6 @@
 #include "../PasswordInput/passwordInput.h"
 #include "../DangerAnalyzer/dangerAnalyzer.h"
 #include "../WebCam/Stream/StreamController.h"
-#include "../WebCam/Stream/Stream.h"
 #include "../Ethernet/Client/ethernetClient.h"
 
 void Controller_start(void)

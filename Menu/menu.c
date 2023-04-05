@@ -310,21 +310,20 @@ static Signal logoutOrLogin()
     return login();
 }
 
-
-static void debugDisplay(int opt, int setIndicator)
-{
-    bool isMenuState = currentState.type == STATE_MENU;
-    printf("overall state:\n"
-            "\tstate: %s\n", isMenuState ? "MENU": "Submenu");
-    printf("\nstate:\n"
-            "\tcurrently displaying: %d\n"
-            "\tindicator set: %s\n"
-            "\tnumber of options: %d\n"
-            "\tselected option: %d\n", 
-            opt, setIndicator == 1 ? "yes": "no", 
-            currentState.state->numOpts, 
-            currentState.state->selectedOpt);
-}
+// static void debugDisplay(int opt, int setIndicator)
+// {
+//     bool isMenuState = currentState.type == STATE_MENU;
+//     printf("overall state:\n"
+//             "\tstate: %s\n", isMenuState ? "MENU": "Submenu");
+//     printf("\nstate:\n"
+//             "\tcurrently displaying: %d\n"
+//             "\tindicator set: %s\n"
+//             "\tnumber of options: %d\n"
+//             "\tselected option: %d\n", 
+//             opt, setIndicator == 1 ? "yes": "no", 
+//             currentState.state->numOpts, 
+//             currentState.state->selectedOpt);
+// }
 
 static int getAutoLogoutTimeoutInMs()
 {
