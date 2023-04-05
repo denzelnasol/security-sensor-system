@@ -116,8 +116,7 @@ $(document).ready(function() {
         line.style.width = numToPercent(dangerLevel);
         line.style.backgroundColor = numToColor(dangerLevel);
         document.getElementById('lineTitle').innerHTML = 'Danger Level: ' + numToPercent(dangerLevel);
-        document.getElementById('dangerIcon').style.display = 
-            dangerLevel >= dangerThreshold ? 'inline' : 'none';
+        document.getElementById('dangerIcon').style.display = dangerLevel >= dangerThreshold ? 'inline' : 'none';
     }
 });
   
