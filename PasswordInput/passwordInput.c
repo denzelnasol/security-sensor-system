@@ -1,55 +1,104 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <stdio.h>
-#include <pthread.h>
-
+#include <stdlib.h>
 
 #include "passwordInput.h"
-#include "../Joystick/joystick.h"
-#include "../Utilities/utilities.h"
 
-#define PASSWORD_LIMIT      10
-#define SLEEP_FREQUENCY_MS  10
+#include "../PasswordManager/passwordManager.h"
+#include "../Joystick/joystick.h"
+// #include "../Menu/MockObjects/joystick.h"
+
 
 // ------------------------- PRIVATE ------------------------- //
 
-static JoystickInput password[PASSWORD_LIMIT];
-static PInputSequence inputSequence = {.input = NULL, .size = 0};
+typedef struct {
+    JoystickInput sequence[PWMGR_MSPASSWORD_LIMIT - 1];
+    size_t size;
+} Sequence;
 
-void *getPasswordThread(void *args);
-static pthread_t s_passwordThreadId;
+static Sequence sequence;
 
-void *getPasswordThread(void *args)
+static char inputToChar(JoystickInput input)
 {
-    int index = 0;
-    JoystickInput input = JOYSTICK_NONE;
-    while (index < PASSWORD_LIMIT) {
-        input = Joystick_getPressed();
-        if (input == JOYSTICK_CENTER) {
-            break;
-        }
-        if (input != JOYSTICK_NONE) {
-
-            printf("%d\n", input);
-
-            password[index] = input;
-            index++;
-        }
-        Utilities_sleepForMs(SLEEP_FREQUENCY_MS);
+    switch (input) {
+        case JOYSTICK_UP:
+            return '1';
+        case JOYSTICK_RIGHT:
+            return '2';
+        case JOYSTICK_DOWN:
+            return '3';
+        case JOYSTICK_LEFT:
+            return '4';
+        default:
+            assert(false);
     }
-    inputSequence.input = password;
-    inputSequence.size = index;
-    return NULL;
+    return 0;
 }
+// precondition: buffer must have size == PWMGR_MSPASSWORD_LIMIT
+static void sequenceToString(const Sequence *seq, char *buffer)
+{
+    for (int i = 0; i < seq->size; i++) {
+        buffer[i] = inputToChar(seq->sequence[i]);
+    }
+    buffer[seq->size] = 0;
+}
+static bool isPasswordValid()
+{
+    char buffer[PWMGR_MSPASSWORD_LIMIT];
+    sequenceToString(&sequence, buffer);
+    return PasswordManager_isMenuSystemPasswordCorrect(buffer, sequence.size);
+}
+
+static bool Sequence_isFull(const Sequence *seq)
+{
+    return seq->size == (PWMGR_MSPASSWORD_LIMIT - 1);
+}
+
+// precondition: seq is not full
+static void Sequence_add(Sequence *seq, JoystickInput input)
+{
+    seq->sequence[seq->size] = input;
+    seq->size++;
+}
+
+static void Sequence_reset(Sequence *seq)
+{
+    seq->size = 0;
+}
+
 
 // ------------------------- PUBLIC ------------------------- //
 
-PInputSequence PasswordInput_getInputSequence(void)
+void PasswordInput_init(void)
 {
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_create(&s_passwordThreadId, &attr, getPasswordThread, NULL);
-    pthread_join(s_passwordThreadId, NULL);
-    return inputSequence;
+    // do nothing
+}
+void PasswordInput_cleanup(void)
+{
+    // do nothing
+}
+
+PInputState PasswordInput_sendNext(JoystickInput input)
+{
+    if (input == JOYSTICK_NONE) {
+        // ignore none inputs
+        return P_INPUT_CONTINUE;
+    }
+
+    if (Sequence_isFull(&sequence)) {
+        Sequence_reset(&sequence);
+        return P_INPUT_TOO_LONG;
+    }
+
+    if (input == JOYSTICK_CENTER) {
+        PInputState state = isPasswordValid() ? P_INPUT_MATCH : P_INPUT_NO_MATCH;
+        Sequence_reset(&sequence);
+        return state;
+    }
+
+    Sequence_add(&sequence, input);
+
+    return P_INPUT_CONTINUE;
 }
 

@@ -8,6 +8,8 @@
 #include "../Utilities/utilities.h"
 #include "../Timer/timer.h"
 
+#define INPUT                               "in"
+
 #define JOYSTICK_UP_PATH                    "/sys/class/gpio/gpio26"
 #define JOYSTICK_DOWN_PATH                  "/sys/class/gpio/gpio46"
 #define JOYSTICK_LEFT_PATH                  "/sys/class/gpio/gpio65"
@@ -34,22 +36,11 @@
 
 #define ACTIVE_LOW                          0
 
-#define DEBOUNCE_DELAY_MS                   100
+#define DEBOUNCE_DELAY_MS                   500
 
 // ------------------------- PRIVATE ------------------------- //
 static bool inDetectState = true;
 static Timer timer;
-
-
-static void configureJoystickPinToInput(const char *joystickDirectionPath) 
-{
-    Utilities_writeStringValueToFile("in", joystickDirectionPath);
-}
-
-static void exportPin(int gpioNumber, const char *pFilePath)
-{
-    Utilities_exportGpioPin(pFilePath, gpioNumber);
-}
 
 static void configureJoystickPinsToGPIO() 
 {
@@ -62,19 +53,19 @@ static void configureJoystickPinsToGPIO()
 
 static void exportAllJoystickGPIO()
 {
-    exportPin(JSUP_GPIO, JOYSTICK_UP_PATH);
-    exportPin(JSDN_GPIO, JOYSTICK_DOWN_PATH);
-    exportPin(JSRT_GPIO, JOYSTICK_RIGHT_PATH);
-    exportPin(JSLFT_GPIO, JOYSTICK_LEFT_PATH);
-    exportPin(JSCENTER_GPIO, JOYSTICK_CENTER_PATH);
+    Utilities_exportGpioPin(JOYSTICK_UP_PATH, JSUP_GPIO);
+    Utilities_exportGpioPin(JOYSTICK_DOWN_PATH, JSDN_GPIO);
+    Utilities_exportGpioPin(JOYSTICK_RIGHT_PATH, JSRT_GPIO);
+    Utilities_exportGpioPin(JOYSTICK_LEFT_PATH, JSLFT_GPIO);
+    Utilities_exportGpioPin(JOYSTICK_CENTER_PATH, JSCENTER_GPIO);
 }
 
 void configureAllJoystickPinsToInput() 
 {
-    configureJoystickPinToInput(JOYSTICK_UP_DIRECTION_PATH);
-    configureJoystickPinToInput(JOYSTICK_DOWN_DIRECTION_PATH);
-    configureJoystickPinToInput(JOYSTICK_LEFT_DIRECTION_PATH);
-    configureJoystickPinToInput(JOYSTICK_RIGHT_DIRECTION_PATH);
+    Utilities_writeStringValueToFile(INPUT, JOYSTICK_UP_DIRECTION_PATH);
+    Utilities_writeStringValueToFile(INPUT, JOYSTICK_DOWN_DIRECTION_PATH);
+    Utilities_writeStringValueToFile(INPUT, JOYSTICK_LEFT_DIRECTION_PATH);
+    Utilities_writeStringValueToFile(INPUT, JOYSTICK_RIGHT_DIRECTION_PATH);
 }
 
 JoystickInput getPressed(void)
@@ -116,7 +107,7 @@ JoystickInput Joystick_getPressed(void)
             return pressed;
         }
     } else {
-        if (Timer_isExpired(&timer) && pressed == JOYSTICK_NONE) {
+        if (Timer_isExpired(&timer)) {
             inDetectState = true;
         }
     }

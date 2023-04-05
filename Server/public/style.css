@@ -1,0 +1,129 @@
+html, body, #content {
+    height: 100%;
+}
+
+body {
+    background-color: whitesmoke;
+}
+
+#self-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#videoContainer {
+    height: 80vh;
+    position: relative;
+
+    /* cant see shit */
+    background-color: gray;
+}
+#videoContainer > * {
+    width: 100%;
+    height: 100%;
+}
+#videoMetadataOverlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: transparent;
+    height: 2rem;
+    margin-right: 5px;
+    margin-left: 5px;
+    text-align: right;
+    color: white;
+    z-index: 100;
+}
+#video-list > li:hover {
+    background-color: gainsboro;
+}
+
+#content {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+#content > * {
+    flex: 1 1 auto;
+}
+
+#myLine {
+    transition: all 1s;
+    width: 30%;
+    height: 15px;
+    background-color: rgb(247, 58, 34);
+    border-radius: 2px;
+    position: relative;
+}
+
+.box {
+    background-color: #fff;
+    border-radius: 2px;
+    padding: 10px;
+    box-shadow: 0 1px 2px 0 rgb(54 54 72 / 8%);
+    margin: 10px;
+}
+
+.dangerIcon {
+    color: #dc3545;
+}
+
+#leftPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 70vw;
+}
+
+#leftPanel > * {
+    flex: 1 1 auto;
+}
+
+#rightPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#rightPanel > #analytics {
+    flex: 0 1 auto;
+}
+#rightPanel > #recordings {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.box-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.help-icon {
+    color: #0089ff;
+    padding: 5px;
+    border-radius: 50%;
+}
+.help-icon:hover {
+    background-color: lightblue;
+}
+
+@media only screen and (max-width: 500px) {
+    #content {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #content > * {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+    #videoContainer {
+        height: 40vh;
+        position: relative;
+        background-color: gray;
+    }
+    #recordings {
+        max-height: 400px;
+    }
+}

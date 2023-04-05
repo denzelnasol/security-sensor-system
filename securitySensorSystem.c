@@ -1,19 +1,21 @@
 #include <stdio.h>
 
-#include "MotionSensor/motionSensorController.h"
-#include "PasswordInput/passwordInput.h"
-#include "Joystick/joystick.h"
+#include "WebCam/Recorder/Recorder.h"
+#include "WebCam/Stream/StreamController.h"
+#include "WebCam/Stream/Stream.h"
+#include "Controller/controller.h"
+#include "ResponseHandler/responseHandler.h"
 
 int main(int argc, char **argv)
 {
-    Joystick_init();
+    printf("starting...\n");
+    // Recorder_startRecording(300, "test.raw");
 
-    PInputSequence seq = PasswordInput_getInputSequence();
-    printf("got\n");
-    for (int i = 0; i < seq.size; i++) {
-        printf("%d: %d\n", i, seq.input[i]);
-    }
+    Controller_start();
+    
+    ResponseHandler_start();
 
-    Joystick_cleanup();
+    Controller_stop();
+
     return 0;
 }
