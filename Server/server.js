@@ -15,6 +15,8 @@ const WEBSOCKET_IP_ADDRESS = 'localhost';
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({extended:false}));
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
@@ -49,7 +51,7 @@ app.get('/recordings/:id', function (req, res) {
 });
 
 
-const server = app.listen(WEBSOCKET_PORT, WEBSOCKET_IP_ADDRESS, () => {
+const server = app.listen(WEBSOCKET_PORT, () => {
     console.log(`server listening on port ${WEBSOCKET_PORT} with address`, server.address());
 })
 

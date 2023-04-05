@@ -12,7 +12,7 @@
 // to install run: sudo apt-get libcurl4-openssl-dev on the bbg
 
 #define POST_BUFFER_SIZE    64
-#define ENDPOINT_URL        "http://" CLOUD_ADDR ":8088/level"
+#define ENDPOINT_URL        "http://" CLOUD_ADDR ":8088/data"
 
 // ------------------------- PRIVATE ------------------------- //
 
