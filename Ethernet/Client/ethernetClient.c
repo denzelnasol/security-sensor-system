@@ -121,11 +121,11 @@ void Camera_cleanup(void)
 }
 
 // just for testing
-int main() {
-    ClientNet_init();
+// int main() {
+//     ClientNet_init();
 
-    turnCameraOnRequest();
-    Utilities_sleepForMs(30000);
-    turnCameraOffRequest();
+//     turnCameraOnRequest();
+//     Utilities_sleepForMs(30000);
+//     turnCameraOffRequest();
     
-}
+// }

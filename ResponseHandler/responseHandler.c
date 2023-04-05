@@ -16,7 +16,6 @@
 #include "../MotionSensor/motionSensor.h"
 #include "../PasswordManager/passwordManager.h"
 #include "../WebCam/Stream/StreamController.h"
-#include "../Ethernet/Client/ethernetClient.h"
 
 #define WHITESPACE                              " \n\r\t"
 
@@ -51,8 +50,8 @@ typedef enum {
     SIGNAL_STOP,
 } Signal;
 
-static char *parseClientRequest(char *request, int sizeOfCommand);
-static bool parseNumber(char *number, int *result, char *response);
+static const char *parseClientRequest(const char *request, int sizeOfCommand);
+static bool parseNumber(const char *number, int *result, char *response);
 static void getDangerLevel(char *response);
 static void getNumTriggers(char *response);
 static void toggle(char *response);
@@ -64,18 +63,18 @@ static void configureAutoLogout(char *response);
 static void configureRemoteAccess(char *response);
 
 static void ping(char *response);
-static void loginMFA(char *command, char *response);
-static void login(char *command, char *response);
-static void verifyIdentity(char *command, char *response);
-static void setPassword(char *command, char *response);
-static void setPattern(char *command, char *response);
-static void executeClientRequest(char *command, char *cmd, char *response);
+static void loginMFA(const char *command, char *response);
+static void login(const char *command, char *response);
+static void verifyIdentity(const char *command, char *response);
+static void setPassword(const char *command, char *response);
+static void setPattern(const char *command, char *response);
+static void executeClientRequest(const char *command, char *cmd, char *response);
 
 static Signal executeCommand(char *cmd, char *response);
 static Signal execute(char *command, char *response);
 
 
-static bool parseNumber(char *number, int *result, char *response)
+static bool parseNumber(const char *number, int *result, char *response)
 {
     char *end;
     long num = strtol(number, &end, 10);
@@ -96,7 +95,7 @@ static bool parseNumber(char *number, int *result, char *response)
     *result = (int)num;
     return true;
 }
-static char *parseClientRequest(char *request, int sizeOfCommand)
+static const char *parseClientRequest(const char *request, int sizeOfCommand)
 {
     return request + sizeOfCommand;
 }
@@ -136,6 +135,7 @@ static void toggle(char *response)
         if (Stream_Controller_isAuto()) {
             snprintf(response, RESPONSE_PACKET_SIZE, "camera is set to trigger. Cannot be toggled");
         } else {
+            #include "../Ethernet/Client/ethernetClient.h"
             if (Camera_toggle()) {
                 isOn = Camera_isLive();
                 snprintf(response, RESPONSE_PACKET_SIZE, "camera now is %s\n", isOn ? "on": "off");
@@ -328,18 +328,18 @@ static void ping(char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     }
 }
-static void loginMFA(char *command, char *response)
+static void loginMFA(const char *command, char *response)
 {
-    char *password = parseClientRequest(command, sizeof(CLIENT_REQ_MFA));
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_MFA));
     if (!Mfa_isValid(password, strlen(password))) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     }
 }
-static void login(char *command, char *response)
+static void login(const char *command, char *response)
 {
-    char *password = parseClientRequest(command, sizeof(CLIENT_REQ_LOGIN));
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_LOGIN));
     if (!PasswordManager_isLoginPasswordCorrect(password, strlen(password))) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
         return;
@@ -351,24 +351,24 @@ static void login(char *command, char *response)
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     }
 }
-static void verifyIdentity(char *command, char *response)
+static void verifyIdentity(const char *command, char *response)
 {
-    char *password = parseClientRequest(command, sizeof(CLIENT_REQ_AUTH));
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_AUTH));
     if (PasswordManager_isLoginPasswordCorrect(password, strlen(password))) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
     }
 }
-static void setPassword(char *command, char *response)
+static void setPassword(const char *command, char *response)
 {
-    char *password = parseClientRequest(command, sizeof(CLIENT_REQ_SETPASS));
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_SETPASS));
     PasswordManager_changeLoginPassword(password, strlen(password));
     snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
 }
-static void setPattern(char *command, char *response)
+static void setPattern(const char *command, char *response)
 {
-    char *password = parseClientRequest(command, sizeof(CLIENT_REQ_JSETPASS));
+    const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_JSETPASS));
     bool isOk = PasswordManager_changeMenuSystemPassword(password, strlen(password));
     if (isOk) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
@@ -378,7 +378,7 @@ static void setPattern(char *command, char *response)
 }
 
 
-static void executeClientRequest(char *command, char *cmd, char *response)
+static void executeClientRequest(const char *command, char *cmd, char *response)
 {
     if (strncmp(cmd, CLIENT_REQ_PING, sizeof(CLIENT_REQ_PING)) == 0) {
         ping(response);

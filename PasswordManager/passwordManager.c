@@ -18,7 +18,7 @@
 
 typedef struct {
     // the string is ended with 0
-    char *cstring;
+    const char *cstring;
     size_t len;
 } string;
 
@@ -43,21 +43,6 @@ static bool isPasswordCorrect(const string *correctPassword, const string *passw
     }
     return isMatch;
 }
-
-// precondition: the newPassword is valid
-static bool setPassword(string *destPassword, const string *newPassword)
-{
-    snprintf(destPassword->cstring, PWMGR_PASSWORD_LIMIT, "%s", newPassword->cstring);
-    destPassword->len = newPassword->len;
-    return true;
-}
-static void getPassword(const char *pFilePath, string *dest)
-{
-    // the max len of the string will be PWMGR_PASSWORD_LIMIT - 1
-    Utilities_readStringFromFile(pFilePath, dest->cstring, PWMGR_PASSWORD_LIMIT);
-    dest->len = strlen(dest->cstring);
-}
-
 static bool isValidMSChar(char ch)
 {
     return ch >= '1' && ch <= '4';
@@ -76,10 +61,12 @@ static bool isMenuSystemPasswordValid(const string *password)
 
 void PasswordManager_init(void)
 {
+    Utilities_readStringFromFile(PASSWORD_PATH, remoteAdminPasswordRaw, PWMGR_PASSWORD_LIMIT);
+    Utilities_readStringFromFile(MS_PASSWORD_PATH, menuSystemPasswordRaw, PWMGR_PASSWORD_LIMIT);
     remoteAdminPassword.cstring = remoteAdminPasswordRaw;
-    getPassword(PASSWORD_PATH, &remoteAdminPassword);
+    remoteAdminPassword.len = strlen(remoteAdminPasswordRaw);
     menuSystemPassword.cstring = menuSystemPasswordRaw;
-    getPassword(MS_PASSWORD_PATH, &menuSystemPassword);
+    menuSystemPassword.len = strlen(menuSystemPasswordRaw);
 }
 void PasswordManager_cleanup(void)
 {
@@ -87,7 +74,7 @@ void PasswordManager_cleanup(void)
     Utilities_writeStringValueToFile(menuSystemPassword.cstring, MS_PASSWORD_PATH);
 }
 
-bool PasswordManager_isLoginPasswordCorrect(char *password, size_t len)
+bool PasswordManager_isLoginPasswordCorrect(const char *password, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = password;
@@ -101,7 +88,7 @@ bool PasswordManager_isLoginPasswordCorrect(char *password, size_t len)
     pthread_mutex_unlock(&s_passwordMutex);
     return res;
 }
-bool PasswordManager_isMenuSystemPasswordCorrect(char *password, size_t len)
+bool PasswordManager_isMenuSystemPasswordCorrect(const char *password, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = password;
@@ -116,21 +103,17 @@ bool PasswordManager_isMenuSystemPasswordCorrect(char *password, size_t len)
     return res;
 }
 
-bool PasswordManager_changeLoginPassword(char *newPassword, size_t len)
+bool PasswordManager_changeLoginPassword(const char *newPassword, size_t len)
 {
-    string passwordStr;
-    passwordStr.cstring = newPassword;
-    passwordStr.len = len;
-
-    bool res = false;
     pthread_mutex_lock(&s_passwordMutex);
     {
-        res = setPassword(&remoteAdminPassword, &passwordStr);
+        snprintf(remoteAdminPasswordRaw, PWMGR_PASSWORD_LIMIT, "%s", newPassword);
+        remoteAdminPassword.len = len;
     }
     pthread_mutex_unlock(&s_passwordMutex);
-    return res;
+    return true;
 }
-bool PasswordManager_changeMenuSystemPassword(char *newPassword, size_t len)
+bool PasswordManager_changeMenuSystemPassword(const char *newPassword, size_t len)
 {
     string passwordStr;
     passwordStr.cstring = newPassword;
@@ -140,11 +123,11 @@ bool PasswordManager_changeMenuSystemPassword(char *newPassword, size_t len)
         return false;
     }
 
-    bool res = false;
     pthread_mutex_lock(&s_patternMutex);
     {
-        res = setPassword(&menuSystemPassword, &passwordStr);
+        snprintf(menuSystemPasswordRaw, PWMGR_MSPASSWORD_LIMIT, "%s", newPassword);
+        menuSystemPassword.len = len;
     }
     pthread_mutex_unlock(&s_patternMutex);
-    return res;
+    return true;
 }
