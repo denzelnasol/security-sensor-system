@@ -29,23 +29,35 @@ exports.listen = function(server) {
     // Send the data to the web socket to relay to clients
     // and create a file recording
     udpServer.on('message', (msg, rinfo) => {
+	try {
 //       console.log("received: " + msg.toString());
 	 if (!fileStream) {
-            fileStream = fs.createWriteStream(`recordings/${formatDate()}.mp4`);
+            fileStream = fs.createWriteStream(`recordings/new-recording.mp4`);
         } else {
             fileStream.write(msg);
         }
         io.emit('stream', msg);
-    });
+	} catch (e) {
+		console.log(e);
+	}   
+ });
 
     udpServer.on('close', () => {
+	try {
+
         if (fileStream) {
             fileStream.end();
         }
+	} catch(e) {
+	console.log(e);
+	}
     });
 
     udpServer.on('error', (err) => {
-        console.log(`server error: ${err.stack}`);
+	if (fileStream) {
+	fileStream.end();
+}       
+ console.log(`server error: ${err.stack}`);
     });
 }
 
