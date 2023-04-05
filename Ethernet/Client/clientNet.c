@@ -20,11 +20,13 @@ static struct sockaddr_in sinRemote;
 // ------------------------- PUBLIC ------------------------- //
 
 void ClientNet_init(void) {
-    struct sockaddr_in sin;
-    memset(&sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    inet_pton(AF_INET, ETH_HOST_ADDR, &(sin.sin_addr));
-    sin.sin_port = htons(ETH_HOST_PORT);
+    memset(&sinRemote, 0, sizeof(sinRemote));
+    sinRemote.sin_family = AF_INET;
+
+    int res = inet_pton(AF_INET, ETH_HOST_ADDR, &(sinRemote.sin_addr));
+    printf("inet_pton return: %d\n", res);
+
+    sinRemote.sin_port = htons(ETH_HOST_PORT);
 
     socketDescriptor = socket(PF_INET, SOCK_DGRAM, 0);
     if (socketDescriptor == -1) {

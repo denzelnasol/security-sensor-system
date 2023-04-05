@@ -1,10 +1,13 @@
 #include <string.h>
+#include <pthread.h>
 
 #include "ethernetClient.h"
 #include "clientNet.h"
 #include "../ethernet.h"
 
 #include "../../WebCam/Stream/Stream.h"
+#include "../../Utilities/utilities.h"
+
 
 /**
  * 
@@ -13,15 +16,27 @@
 */
 
 static bool isCameraOn = false;
+static pthread_mutex_t cameraMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void setCamera(bool enabled)
 {
-    isCameraOn = enabled;
+    pthread_mutex_lock(&cameraMutex);
+    {
+        isCameraOn = enabled;
+    }
+    pthread_mutex_unlock(&cameraMutex);
 }
 
 static bool isCameraActive()
 {
-    return isCameraOn;
+    bool isActive;
+    pthread_mutex_lock(&cameraMutex);
+    {
+        isActive = isCameraOn;
+    }
+    pthread_mutex_unlock(&cameraMutex);
+
+    return isActive;
 }
 
 static bool turnCameraOnRequest()
@@ -107,5 +122,10 @@ void Camera_cleanup(void)
 
 // just for testing
 int main() {
+    ClientNet_init();
+
     turnCameraOnRequest();
+    Utilities_sleepForMs(30000);
+    turnCameraOffRequest();
+    
 }
