@@ -35,6 +35,9 @@ body {
     color: white;
     z-index: 100;
 }
+#video-list > li:hover {
+    background-color: gainsboro;
+}
 
 #content {
     display: flex;
@@ -101,3 +104,22 @@ body {
     background-color: lightblue;
 }
 
+@media only screen and (max-width: 500px) {
+    #content {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #content > * {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+    #videoContainer {
+        height: 40vh;
+        position: relative;
+        background-color: gray;
+    }
+    #recordings {
+        max-height: 400px;
+    }
+}

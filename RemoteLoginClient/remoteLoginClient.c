@@ -427,7 +427,7 @@ static void changeJoystickPattern()
 
     // set new pattern
     char confirmedPassword[PASSWORD_LENGTH];
-    printf("Enter current pattern: ");
+    printf("Enter new pattern: ");
     getPassword(password, sizeof(password));
     if (!patternIsValid(password, strlen(password))) {
         printf("Incorrect format of pattern.\n");

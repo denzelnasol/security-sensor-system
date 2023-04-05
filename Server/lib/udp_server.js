@@ -8,7 +8,7 @@ var udpServer;
 var fileStream;
 
 const STREAM_PORT = 8080;
-const STREAM_IP_ADDRESS = '192.168.7.1';
+const STREAM_IP_ADDRESS = 'localhost';
 
 exports.listen = function(server) {
     io = new SocketIOServer(server);
@@ -24,27 +24,40 @@ exports.listen = function(server) {
 
     // Initialize socket to listen for the webcam streaming data
     udpServer = dgram.createSocket('udp4');
-    udpServer.bind(STREAM_PORT, STREAM_IP_ADDRESS);
+    udpServer.bind(STREAM_PORT);
 
     // Send the data to the web socket to relay to clients
     // and create a file recording
     udpServer.on('message', (msg, rinfo) => {
-        if (!fileStream) {
-            fileStream = fs.createWriteStream(`recordings/${formatDate()}.mp4`);
+	try {
+//       console.log("received: " + msg.toString());
+	 if (!fileStream) {
+            fileStream = fs.createWriteStream(`recordings/new-recording.mp4`);
         } else {
             fileStream.write(msg);
         }
         io.emit('stream', msg);
-    });
+	} catch (e) {
+		console.log(e);
+	}   
+ });
 
     udpServer.on('close', () => {
+	try {
+
         if (fileStream) {
             fileStream.end();
         }
+	} catch(e) {
+	console.log(e);
+	}
     });
 
     udpServer.on('error', (err) => {
-        console.log(`server error: ${err.stack}`);
+	if (fileStream) {
+	fileStream.end();
+}       
+ console.log(`server error: ${err.stack}`);
     });
 }
 

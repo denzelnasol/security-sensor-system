@@ -340,7 +340,7 @@ static void loginMFA(const char *command, char *response)
 static void login(const char *command, char *response)
 {
     const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_LOGIN));
-    if (!PasswordManager_isLoginPasswordCorrect(password)) {
+    if (!PasswordManager_isLoginPasswordCorrect(password, strlen(password))) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
         return;
     }
@@ -354,7 +354,7 @@ static void login(const char *command, char *response)
 static void verifyIdentity(const char *command, char *response)
 {
     const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_AUTH));
-    if (PasswordManager_isLoginPasswordCorrect(password)) {
+    if (PasswordManager_isLoginPasswordCorrect(password, strlen(password))) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     } else {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_BAD);
@@ -363,13 +363,13 @@ static void verifyIdentity(const char *command, char *response)
 static void setPassword(const char *command, char *response)
 {
     const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_SETPASS));
-    PasswordManager_changeLoginPassword(password);
+    PasswordManager_changeLoginPassword(password, strlen(password));
     snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
 }
 static void setPattern(const char *command, char *response)
 {
     const char *password = parseClientRequest(command, sizeof(CLIENT_REQ_JSETPASS));
-    bool isOk = PasswordManager_changeMenuSystemPassword(password);
+    bool isOk = PasswordManager_changeMenuSystemPassword(password, strlen(password));
     if (isOk) {
         snprintf(response, RESPONSE_PACKET_SIZE, STATUS_CODE_OK);
     } else {
