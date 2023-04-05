@@ -25,8 +25,8 @@ OUTFILE = beaglecam
 
 CROSS_COMPILE = arm-linux-gnueabihf-
 CC_C = $(CROSS_COMPILE)gcc
-# CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
-CFLAGS = -Wall -g -std=c99 -D _POSIX_C_SOURCE=200809L -Wshadow # TEMPORARY: Replace with commented code when testing is finished
+CFLAGS = -Wall -g -std=c99 -Werror -D _POSIX_C_SOURCE=200809L -Wshadow
+# CFLAGS = -Wall -g -std=c99 -D _POSIX_C_SOURCE=200809L -Wshadow # TEMPORARY: Replace with commented code when testing is finished
 
 LFLAGS = -L$(HOME)/cmpt433/public/curl_lib_BBB/lib/libs
 
@@ -35,7 +35,7 @@ all: bbg sshclient ethcamera
 bbg:
 	$(CC_C) $(CFLAGS) -pthread $(SOURCE) -o  $(OUTDIR)/$(OUTFILE) $(LFLAGS) -lpthread -lcurl
 	@echo "Copying capture..."
-	cp capture $(OUTDIR)
+	cp bin/* $(OUTDIR)
 	@echo "Building node server..."
 	sudo mkdir -p $(OUTDIR)/Server-copy/
 	sudo cp -R Server/* $(OUTDIR)/Server-copy/
