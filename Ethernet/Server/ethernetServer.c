@@ -47,7 +47,7 @@ static Signal execute(const char *command, char *response)
 int main(void)
 {
     ServerNet_init();
-
+    Stream_init();
     char command[ETH_PACKET_SIZE];
     char response[ETH_PACKET_SIZE];
 

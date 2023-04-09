@@ -36,6 +36,8 @@ class JSMpegWritableSource {
       }
 }
 
+// code Referenced from:
+// https://opencoursehub.cs.sfu.ca/bfraser/grav-cms/cmpt433/links/files/2022-student-howtos/StreamingWebcamVideoToABrowser.pdf
 const socket = io.connect('http://34.123.31.151');
 
 const canvas = $("#self-view")[0];
