@@ -1,6 +1,7 @@
 /*
     Code adapted from the sample code from jsmpeg's GitHub:
     https://github.com/phoboslab/jsmpeg/blob/master/websocket-relay.js
+    https://opencoursehub.cs.sfu.ca/bfraser/grav-cms/cmpt433/links/files/2022-student-howtos/StreamingWebcamVideoToABrowser.pdf
 */
 var fs   = require('fs');
 var path = require('path');

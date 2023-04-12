@@ -1,0 +1,5 @@
+List of overall references that have been used in the creation of this application:
+
+Beaglebone Streaming Help:
+https://opencoursehub.cs.sfu.ca/bfraser/grav-cms/cmpt433/links/files/2022-student-howtos/StreamingWebcamVideoToABrowser.pdf
+https://github.com/derekmolloy/boneCV

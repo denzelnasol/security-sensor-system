@@ -12,7 +12,7 @@
 
 #include "../Networking/networking.h"
 
-#define TIMEOUT_S   1
+#define TIMEOUT_S   10
 
 
 // ------------------------- PRIVATE ------------------------- //
